@@ -3,144 +3,126 @@
 
 <h1>Stock CPO</h1>
 
-<!-- FILTER -->
 <div class="filter-card">
-  <div class="filter-grid">
 
-    <input ref="dateRange" class="date-range" placeholder="Pilih rentang tanggal"/>
+  <div class="filter-container">
 
-    <button @click="setQuickFilter(7)">7D</button>
-    <button @click="setQuickFilter(30)">30D</button>
-    <button @click="setQuickFilter(90)">3M</button>
+    <!-- DATE -->
+    <input 
+      type="text"
+      class="date-range"
+      placeholder="Pilih Tanggal"
+    />
 
-    <button class="btn-filter" @click="applyFilter">
-      Apply
+    <!-- COMPANY -->
+    <select v-model="company_code">
+      <option value="">All Company</option>
+      <option 
+        v-for="c in companyList" 
+        :key="c.company_code" 
+        :value="c.company_code"
+      >
+        {{ c.company_name }}
+      </option>
+    </select>
+
+    <!-- MILL -->
+    <select v-model="mill_code">
+      <option value="">All Mill</option>
+      <option 
+        v-for="m in millList" 
+        :key="m.mill_code" 
+        :value="m.mill_code"
+      >
+        {{ m.mill_name }}
+      </option>
+    </select>
+
+    <!-- BUTTON -->
+    <button class="apply-btn" @click="applyFilter">
+      Apply Filter
     </button>
 
   </div>
+
 </div>
 
-<!-- BUTTON INPUT -->
-<button class="btn-add" @click="showModal = true">
-  + Input Stock
-</button>
+<div class="filter-info" v-if="company_code || mill_code || start_date">
+  <span v-if="start_date">
+    📅 {{ start_date }} - {{ end_date }}
+  </span>
+  <span v-if="company_code">
+    🏢 {{ getCompanyName(company_code) }}
+  </span>
+  <span v-if="mill_code">
+    🏭 {{ getMillName(mill_code) }}
+  </span>
+</div>
 
 <!-- CHART + KPI -->
 <div class="card">
-
   <div class="chart-header">
     <h3>Stock Movement</h3>
-
-    <select v-model="selectedMillChart" class="dropdown-mill">
-      <option value="">All (Total)</option>
-      <option v-for="m in millListAll" :key="m" :value="m">
-        {{ m }}
-      </option>
-    </select>
+    <span class="chart-info">Menampilkan 7 hari terakhir</span>
   </div>
-
+  <!-- 🔥 TAMBAH INI -->
+  <div v-if="stockData.length" class="chart-wrapper">
+    <canvas ref="chartStock"></canvas>
+  </div>
+  <!-- 🔥 EMPTY STATE -->
+  <div v-else class="empty-state">
+    <p>📭 Tidak ada data</p>
+    <small>Coba ubah filter tanggal / PT / Mill</small>
+  </div>
   <div class="chart-wrapper">
     <canvas ref="chartStock"></canvas>
   </div>
-
   <div class="kpi-bar">
-    <div class="kpi-box">
-      <h3>Total Stock CPO</h3>
-      <p>{{ formatNumber(totalCPO) }}</p>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="kpi-box">
-      <h3>Total Stock Kernel</h3>
-      <p>{{ formatNumber(totalKernel) }}</p>
-    </div>
+  <div class="kpi-box">
+    <h3>Total Stock CPO</h3>
+    <p>{{ stockData.length ? formatNumber(totalCPO) : '-' }}</p>
   </div>
+  <div class="divider"></div>
+  <div class="kpi-box">
+    <h3>Total Stock Kernel</h3>
+    <p>{{ stockData.length ? formatNumber(totalKernel) : '-' }}</p>
+  </div>
+</div>
 
 </div>
 
 <!-- TABLE -->
-<div class="card">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>PT</th>
-        <th>Mill</th>
-        <th>Tanggal</th>
-        <th>Produk</th>
-        <th>Tipe</th>
-        <th>Jumlah</th>
-        <th>Balance</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr v-for="(row,i) in displayData" :key="i">
-        <td>{{ row.pt }}</td>
-        <td>{{ row.mill }}</td>
-        <td>{{ row.tanggal }}</td>
-        <td>{{ row.produk }}</td>
-        <td>{{ row.tipe }}</td>
-        <td>{{ formatNumber(row.jumlah) }}</td>
-        <td>{{ formatNumber(row.balance || 0) }}</td>
-      </tr>
-    </tbody>
-  </table>
+<h3 class="table-title">Recent Movement</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Tanggal</th>
+      <th>Produk</th>
+      <th>Tipe</th>
+      <th>Jumlah</th>
+      <th>Stock</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="item in stockData.slice(-10)" :key="item.id">
+      <td>{{ item.tanggal }}</td>
+      <td>
+        <span :class="['badge', item.produk === 'CPO' ? 'cpo' : 'pk']">
+          {{ item.produk }}
+        </span>
+      </td>
+      <td>{{ item.tipe }}</td>
+      <td>{{ formatNumber(item.jumlah) }}</td>
+      <td class="stock">{{ formatNumber(item.running_stock) }}</td>
+    </tr>
+  </tbody>
+</table>
 </div>
 
-<!-- MODAL INPUT -->
-<div v-if="showModal" class="modal-overlay">
-<div class="modal">
-
-<h3>Input Stock</h3>
-
-<div class="input-grid">
-
-<select v-model="form.pt">
-<option disabled value="">PT</option>
-<option v-for="pt in ptList" :key="pt.name" :value="pt.name">
-{{ pt.name }}
-</option>
-</select>
-
-<select v-model="form.mill">
-<option disabled value="">Mill</option>
-<option v-for="m in millList" :key="m" :value="m">
-{{ m }}
-</option>
-</select>
-
-<input type="date" v-model="form.tanggal">
-
-<select v-model="form.produk">
-<option>CPO</option>
-<option>KERNEL</option>
-</select>
-
-<select v-model="form.tipe">
-<option>IN</option>
-<option>OUT</option>
-<option>ADJ</option>
-</select>
-
-<input type="number" v-model="form.jumlah" placeholder="Jumlah">
-<input v-model="form.keterangan" placeholder="Keterangan">
-
-</div>
-
-<div class="modal-action">
-<button @click="showModal=false">Batal</button>
-<button @click="submitStock">Simpan</button>
-</div>
-
-</div>
-</div>
-
-</div>
 </template>
 
 <script>
-import Chart from "chart.js/auto"
+import { Chart } from "chart.js/auto";
 import flatpickr from "flatpickr"
 import "flatpickr/dist/flatpickr.css"
 
@@ -148,293 +130,345 @@ export default {
 
 data(){
 return{
-  stock:[],
-  allData:[],
-  startDate:"",
-  endDate:"",
+    stockData: [],
+    dateRange: "",
+    company_code: "",
+    mill_code: "",
+    start_date: "",
+    end_date: "",
+    chart: null,
 
-  selectedMillChart:"",
-  millListAll:[],
-
-  totalCPO:0,
-  totalKernel:0,
-
-  chart:null,
-
-  showModal:false,
-
-  form:{
-    pt:"",
-    mill:"",
-    tanggal:"",
-    produk:"CPO",
-    tipe:"IN",
-    jumlah:"",
-    keterangan:""
+    companyList: [],
+    millList: []
+  }
+},
+computed: {
+  totalCPO() {
+    const cpo = this.stockData.filter(i => i.produk === "CPO")
+    return cpo.length ? cpo[cpo.length - 1].running_stock : 0
   },
-
-  ptList:[
-    { name:"PT SAWIT SUMBERMAS SARANA TBK", mills:["SELANGKUN MILL"] },
-    { name:"PT SAWIT MANDIRI LESTARI", mills:["SUNGAI KUNING MILL"] },
-    { name:"PT SAWIT MANDIRI LESTARI", mills:["SUJA MILL"] },
-    { name:"PT MENTENG KENCANA MAS", mills:["KANAMIT MILL"]},
-    { name:"PT MIRZA PRATAMA PUTRA", mills:["SUMBER CAHAYA MILL"]},
-    { name:"PT SAWIT SUMBERMAS SARANA TBK", mills:["SULUNG MILL"]},
-    { name:"PT BORNEO SAWIT GEMILANG", mills:["PANGKOH MILL"]},
-    { name:"PT KALIMANTAN SAWIT ABADI", mills:["NATAI BARU MILL"]},
-    { name:"PT MITRA MENDAWI SEJATI", mills:["SUAYAP MILL"]},
-    { name:"PT MITRA MENDAWI SEJATI", mills:["SUAYAP MILL"]},
-    { name:"PT MITRA MENDAWI SEJATI", mills:["SUAYAP MILL PKO"]},
-    { name:"PT SAWIT MULTI UTAMA", mills:["NANGA KIU MILL"] },
-    { name:"PT SAWIT MANDIRI LESTARI", mills:["SUNGAI KUNING MILL"] },
-    { name:"PT TANJUNG SAWIT ABADI", mills:["MALATA MILL"] }
-  ],
-
-  millList:[]
+  totalPK() {
+    const pk = this.stockData.filter(i => i.produk === "PK")
+    return pk.length ? pk[pk.length - 1].running_stock || 0 : 0
 }
 },
-
-computed:{
-  displayData(){
-    return this.stock.slice(-20)
-  }
-},
-
-watch:{
-  selectedMillChart(){
-    this.createChart()
-  },
-  "form.pt"(val){
-    const p = this.ptList.find(i=>i.name===val)
-    this.millList = p ? p.mills : []
-    this.form.mill=""
-  }
-},
-
 mounted(){
+    this.fetchCompany()
+    this.fetchMill()
+    this.fetchStock()
 
-this.loadData().then(()=>{
-  this.setQuickFilter(30)
-})
-
-this.$nextTick(()=>{
-flatpickr(this.$refs.dateRange,{
-mode:"range",
-  dateFormat:"Y-m-d",
-  onChange:(dates)=>{
-    if(dates.length === 2){
-      this.startDate = dates[0].toISOString().slice(0,10)
-      this.endDate = dates[1].toISOString().slice(0,10)
+    flatpickr(".date-range", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    onClose: (selectedDates) => {
+      if (selectedDates.length === 2) {
+        this.start_date = selectedDates[0].toISOString().split("T")[0]
+        this.end_date = selectedDates[1].toISOString().split("T")[0]
+      }
     }
-  }
-})
-})
-
+  })
+  },
+watch: {
+  company_code() { this.fetchStock() },
+  mill_code() { this.fetchStock() },
+  start_date() { this.fetchStock() },
+  end_date() { this.fetchStock() }
 },
-
 methods:{
+  getCompanyName(code) {
+    const c = this.companyList.find(i => i.company_code === code)
+    return c ? c.company_name : code
+  },
 
-async loadData(){
-  const res = await fetch("http://127.0.0.1:8000/stock-combined")
-  const data = await res.json()
+getMillName(code) {
+    const m = this.millList.find(i => i.mill_code === code)
+    return m ? m.mill_name : code
+  },
+  applyFilter() {
+    this.fetchStock()
+  },
+  formatNumber(v) {
+    return Number(v).toLocaleString("id-ID")
+  },
+  async fetchStock() {
+  try {
+    let url = "http://127.0.0.1:8000/stock-final?"
 
-  this.allData = data
-  this.millListAll = [...new Set(data.map(i => i.mill).filter(Boolean))]
-},
+    if (this.company_code) url += `company_code=${this.company_code}&`
+    if (this.mill_code) url += `mill_code=${this.mill_code}&`
+    if (this.start_date && this.end_date) {
+      url += `start_date=${this.start_date}&end_date=${this.end_date}`
+    }
 
-setQuickFilter(days){
-  if(!this.allData.length) return
+    const res = await fetch(url)
+    const data = await res.json()
 
-  const maxDate = Math.max(...this.allData.map(i => new Date(i.tanggal)))
-  
-  const end = new Date(maxDate)
-  const start = new Date(end)
-  start.setDate(start.getDate() - days)
+    this.stockData = data
 
-  this.startDate = start.toISOString().slice(0,10)
-  this.endDate = end.toISOString().slice(0,10)
+    this.$nextTick(() => {
+      this.createChart()
+    })
 
-  this.applyFilter()
-},
-
-applyFilter(){
-
-  const filtered = this.allData.filter(i=>{
-    return i.tanggal >= this.startDate && i.tanggal <= this.endDate
-  })
-
-  this.stock = filtered
-
-  this.totalCPO = this.stock
-    .filter(i => i.produk === "CPO")
-    .reduce((a,b)=>{
-      const jumlah = Number(String(b.jumlah).replace(/\./g,'')) || 0
-      return b.tipe === "OUT" ? a - jumlah : a + jumlah
-    },0)
-
-  this.totalKernel = this.stock
-    .filter(i => i.produk === "KERNEL")
-    .reduce((a,b)=>{
-      const jumlah = Number(String(b.jumlah).replace(/\./g,'')) || 0
-      return b.tipe === "OUT" ? a - jumlah : a + jumlah
-    },0)
-
-  this.createChart()
-},
-
-createChart(){
-
-  const canvas = this.$refs.chartStock
-  if(!canvas) return
-
-  const ctx = canvas.getContext("2d")
-
-  if(this.chart){
-    this.chart.destroy()
+  } catch (err) {
+    console.error(err)
   }
-
-  let data = this.stock || []
-  if(!data.length) return
-
-  if(this.selectedMillChart){
-    data = data.filter(i => i.mill === this.selectedMillChart)
+  },
+  async fetchCompany() {
+    const res = await fetch("http://127.0.0.1:8000/company")
+    this.companyList = await res.json()
+  },
+  async fetchMill() {
+    const res = await fetch("http://127.0.0.1:8000/mill")
+    this.millList = await res.json()
+  },
+  createChart() {
+    // ⛔ HANDLE DATA KOSONG
+    if (!this.stockData.length) {
+      if (this.chart) this.chart.destroy()
+      return
+    }
+    if (this.chart) {
+      this.chart.destroy()
+    }
+    const ctx = this.$refs.chartStock.getContext("2d")
+    // 🔥 ambil data per tanggal (CPO saja dulu)
+    const grouped = {}
+    this.stockData.forEach(item => {
+      if (item.produk === "CPO") {
+        grouped[item.tanggal] = item.running_stock
+      }
+    })
+    const labels = Object.keys(grouped).slice(-7)
+    const values = Object.values(grouped).slice(-7)
+    // 🎨 GRADIENT (EFEK TABUNG)
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400)
+    gradient.addColorStop(0, "#86efac")
+    gradient.addColorStop(1, "#16a34a")
+    this.chart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Stock CPO",
+            data: values, // 🔥 ini yang benar
+            backgroundColor: gradient,
+            borderRadius: 10,
+            borderSkipped: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: 0
+        },
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            grid: {display: false}
+          },
+          y: {
+            grid: {color: "#eee"}
+          }
+        }
+      }
+    })
   }
-
-  let running = 0
-  const grouped = {}
-
-  const sorted = [...data].sort((a,b)=> new Date(a.tanggal) - new Date(b.tanggal))
-
-  sorted.forEach(i=>{
-    const jumlah = Number(String(i.jumlah).replace(/\./g,'')) || 0
-    const tgl = i.tanggal.slice(0,10)
-
-    if(i.tipe === "IN") running += jumlah
-    else if(i.tipe === "OUT") running -= jumlah
-    else running += jumlah
-
-    grouped[tgl] = running
-  })
-
-  const labels = Object.keys(grouped)
-    .sort((a,b)=> new Date(a)-new Date(b))
-
-  const values = labels.map(l => grouped[l])
-
-  this.chart = new Chart(ctx,{
-    type:"line",
-    data:{
-      labels,
-      datasets:[{
-        label: this.selectedMillChart || "Total Stock",
-        data: values,
-        borderColor:"#16a34a",
-        tension:0.4
-      }]
-    },
-    options:{
-    responsive:true,
-    maintainAspectRatio:false   // ⬅️ INI KUNCI NYA
   }
-  })
-},
-
-async submitStock(){
-
-await fetch("http://127.0.0.1:8000/stock-movement",{
-method:"POST",
-headers:{ "Content-Type":"application/json" },
-body: JSON.stringify(this.form)
-})
-
-this.showModal=false
-await this.loadData()
-this.setQuickFilter(30)
-
-this.form={
-pt:"",mill:"",tanggal:"",
-produk:"CPO",tipe:"IN",jumlah:"",keterangan:""
-}
-
-},
-
-formatNumber(v){
-  return Number(v).toLocaleString("id-ID")
-}
-
-}
-
-}
+  }
 </script>
 
 <style scoped>
 
-.container{ padding:30px; max-width:1200px; margin:auto; }
+.content {
+  padding: 30px 40px; /* jangan 0 */
+  }
+.container{
+  padding:20px 40px;
+  max-width:1500px;
+  margin:auto;
+  }
 
-.filter-grid{ display:flex; gap:10px; flex-wrap:wrap; }
+.filter-info {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
 
-.date-range{ height:40px; padding:0 10px; border-radius:8px; border:1px solid #ddd; }
+.filter-grid{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  }
 
-.btn-add{margin:10px 0;background:#16a34a;color:white;padding:8px;border-radius:6px;}
+.date-range{
+  height:40px;
+  padding:0 10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  }
+
+.btn-add{
+  margin:10px 0;
+  background:#16a34a;color:white;
+  padding:8px;
+  border-radius:6px;
+  }
 
 .card{
-background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom: 40px; /* biar gak numpuk */
+  }
 
-
-margin-bottom:30px;
+.chart-subtitle {
+  color: #888;
+  font-size: 12px;
 }
 
 .chart-wrapper {
-  height: 350px;
-  position: relative;
+  width: 100%;
+  height: 300px; /* sebelumnya 350 */
+}
+
+.chart-info {
+  font-size: 12px;
+  color: #888;
 }
 
 .chart-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:10px;
-}
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+  }
 
 .dropdown-mill{
-height:36px;
-padding:0 10px;
-border:1px solid #ddd;
-border-radius:8px;
-}
+  height:36px;
+  padding:0 10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  }
 
 .kpi-bar{
-display:flex;
-justify-content:center;
-gap:40px;
-margin-top:20px;
-border-top:1px solid #eee;
-padding-top:10px;
+  position: relative;
+  z-index: 2;
+  display:flex;
+  justify-content:center;
+  gap:40px;
+  margin-top:20px;
+  border-top:1px solid #eee;
+  padding-top:10px;
+  }
+
+.kpi-box{
+  text-align:center;
+  }
+
+.divider{
+  width:1px;
+  height:40px;
+  background:#eee;
+  }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.kpi-box{text-align:center;}
+.table th {
+  background: #f9fafb;
+  text-align: left;
+  padding: 12px;
+  font-size: 13px;
+  color: #555;
+}
 
-.divider{width:1px;height:40px;background:#eee;}
+.table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
 
-.table{width:100%;border-collapse:collapse;}
+.table tr:hover {
+  background: #f3f6fa;
+}
 
-.table th{background:#f3f6fa;padding:10px;}
+.no-data {
+  color: #999;
+  font-style: italic;
+}
 
-.table td{padding:10px;border-bottom:1px solid #eee;}
+/* badge produk */
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge.cpo {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge.pk {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 50px;
+  color: #999;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+/* stock highlight */
+.stock {
+  font-weight: bold;
+  color: #16a34a;
+}
 
 .modal-overlay{
-position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.4);
-display:flex;justify-content:center;align-items:center;
-}
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.4);
+  display:flex;justify-content:center;align-items:center;
+  }
 
-.modal{background:white;padding:20px;border-radius:10px;width:600px;}
+.modal{
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  width:600px;
+  }
 
-.input-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.input-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  }
 
-.modal-action{margin-top:10px;text-align:right;}
+.modal-action{
+  margin-top:10px;
+  text-align:right;}
 
 </style>
