@@ -12,13 +12,23 @@
 
     <nav>
       <router-link to="/">📊 Dashboard</router-link>
-      <a>🚚 Supply Estate</a>
-      <router-link to="/produksi">🏭 Produksi</router-link>
-      <router-link to="/mass-balance">📊 Mass Balance</router-link>
+      <div @click="openProduksi = !openProduksi" class="menu-title clickable">
+      🏭 Produksi {{ openProduksi ? "▾" : "▸" }}
+      </div>
+      <div v-if="openProduksi" class="submenu">
+        <router-link to="/produksi" exact-active-class="active-link">📄 Produksi</router-link>
+        <router-link to="/produksi/supply-estate" exact-active-class="active-link">🌴 Supply Estate</router-link>
+      </div>
+      <div @click="openMass = !openMass" class="menu-title clickable">
+      📊 Mass Balance {{ openMass ? "▾" : "▸" }}
+      </div>
+      <div v-if="openMass" class="submenu">
+        <router-link to="/mass-balance" exact-active-class="active-link">🏭 Mass Balance</router-link>
+        <router-link to="/mass-balance/book-claim" exact-active-class="active-link">🌱 Book & Claim</router-link>
+      </div>
       <router-link to="/stockcpo">🛢 Stock CPO</router-link>
-      <router-link to="/pengiriman">📦Pengiriman</router-link>
+      <router-link to="/pengiriman">📦 Shipment</router-link>
       <a>📑 Report</a>
-      <a>🌱 Book & Claim</a>
     </nav>
 
   </aside>
@@ -37,12 +47,37 @@
 
 <script>
 export default {
-  name: "App"
+  name: "App",
+  data() {
+    return {
+      openProduksi: false,
+      openMass: false
+    }
+  }
+ 
 }
 </script>
 
 
 <style>
+
+.menu-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  font-weight: 600;
+  opacity: 0.9;
+  border-radius: 6px;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover{
+  background: #2c3e50;
+}
 
 .loading,
 .error,
@@ -58,6 +93,11 @@ export default {
 
 button {
   margin-top: 10px;
+}
+
+.active-link {
+  background:#34495e;
+  border-left:4px solid #2ecc71;
 }
 
 /* =========================
@@ -122,14 +162,27 @@ button {
   background:#2c3e50;
 }
 
-.sidebar nav .router-link-active{
-  background:#34495e;
-  border-left:4px solid #2ecc71;
-  color:white;
-  text-decoration:none;
+/* =========================
+   SUB MENU
+========================= */
+
+.submenu {
+  margin-left: 30px; /* geser ke kanan */
+  padding-left: 10px;
+  border-left: 1px solid rgba(255,255,255,0.1); /* garis halus */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
+.submenu a {
+  font-size: 14px;
+  opacity: 0.9;
+}
 
+.submenu a:hover {
+  opacity: 1;
+}
 /* =========================
    CONTENT AREA
 ========================= */
@@ -140,7 +193,6 @@ button {
   padding:30px 0; /* 🔥 FIX */
   background:#f4f6f9;
 }
-
 
 /* =========================
    DASHBOARD CONTAINER

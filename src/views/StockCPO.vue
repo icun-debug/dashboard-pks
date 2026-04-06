@@ -174,8 +174,20 @@ return{
   },
 
   ptList:[
-    { name:"PT SAWIT SUMBERMAS SARANA TBK", mills:["PANGKOH MILL"] },
-    { name:"PT SAWIT MANDIRI LESTARI", mills:["SUNGAI KUNING MILL"] }
+    { name:"PT SAWIT SUMBERMAS SARANA TBK", mills:["SELANGKUN MILL"] },
+    { name:"PT SAWIT MANDIRI LESTARI", mills:["SUNGAI KUNING MILL"] },
+    { name:"PT SAWIT MANDIRI LESTARI", mills:["SUJA MILL"] },
+    { name:"PT MENTENG KENCANA MAS", mills:["KANAMIT MILL"]},
+    { name:"PT MIRZA PRATAMA PUTRA", mills:["SUMBER CAHAYA MILL"]},
+    { name:"PT SAWIT SUMBERMAS SARANA TBK", mills:["SULUNG MILL"]},
+    { name:"PT BORNEO SAWIT GEMILANG", mills:["PANGKOH MILL"]},
+    { name:"PT KALIMANTAN SAWIT ABADI", mills:["NATAI BARU MILL"]},
+    { name:"PT MITRA MENDAWI SEJATI", mills:["SUAYAP MILL"]},
+    { name:"PT MITRA MENDAWI SEJATI", mills:["SUAYAP MILL"]},
+    { name:"PT MITRA MENDAWI SEJATI", mills:["SUAYAP MILL PKO"]},
+    { name:"PT SAWIT MULTI UTAMA", mills:["NANGA KIU MILL"] },
+    { name:"PT SAWIT MANDIRI LESTARI", mills:["SUNGAI KUNING MILL"] },
+    { name:"PT TANJUNG SAWIT ABADI", mills:["MALATA MILL"] }
   ],
 
   millList:[]

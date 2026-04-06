@@ -224,6 +224,7 @@ computed: {
     },
 
     // 🔥 TAMBAH DI SINI
+    
     getCompanyName(code) {
         const c = this.companyData.find(i => i.company_code === code)
         return c ? c.company_name : code
