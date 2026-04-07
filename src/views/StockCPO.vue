@@ -196,20 +196,8 @@ mounted(){
   })
   },
 watch: {
-  company_code() {
-    this.mill_code = "" // reset mill biar gak nyangkut
-  },
-
-  mill_code() {
-    this.fetchStock()
-  },
-
-  start_date() {
-    this.fetchStock()
-  },
-
-  end_date() {
-    this.fetchStock()
+  selectedCompany() {
+    this.selectedMill = null
   }
 },
 methods:{
@@ -223,6 +211,9 @@ methods:{
     return m ? m.mill_name : code
   },
   applyFilter() {
+    console.log("PT:", this.selectedCompany)
+    console.log("Mill:", this.selectedMill)
+    console.log("Date:", this.dateRange)
     this.fetchStock()
   },
   formatNumber(v) {
@@ -232,11 +223,23 @@ methods:{
   try {
     let url = "http://127.0.0.1:8000/stock-final?"
 
-    if (this.company_code) url += `company_code=${this.company_code}&`
-    if (this.mill_code) url += `mill_code=${this.mill_code}&`
-    if (this.start_date && this.end_date) {
-      url += `start_date=${this.start_date}&end_date=${this.end_date}`
+    // ✅ COMPANY
+    if (this.selectedCompany && this.selectedCompany !== "All Company") {
+      url += `company_code=${encodeURIComponent(this.selectedCompany)}&`
     }
+
+    // ✅ MILL
+    if (this.selectedMill && this.selectedMill !== "All Mill") {
+      url += `mill_code=${encodeURIComponent(this.selectedMill)}&`
+    }
+
+    // ✅ DATE
+    if (this.dateRange) {
+      const [start, end] = this.dateRange.split(" to ")
+      url += `start_date=${start}&end_date=${end}`
+    }
+
+    console.log("FINAL URL:", url) // 🔥 debug penting
 
     const res = await fetch(url)
     const data = await res.json()
