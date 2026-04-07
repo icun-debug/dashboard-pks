@@ -30,7 +30,7 @@
     <select v-model="mill_code">
       <option value="">All Mill</option>
       <option 
-        v-for="m in millList" 
+        v-for="m in filteredMillList" 
         :key="m.mill_code" 
         :value="m.mill_code"
       >
@@ -40,7 +40,7 @@
 
     <!-- BUTTON -->
     <button class="apply-btn" @click="applyFilter">
-      Apply Filter
+      🔍 Apply Filter
     </button>
 
   </div>
@@ -74,9 +74,6 @@
     <p>📭 Tidak ada data</p>
     <small>Coba ubah filter tanggal / PT / Mill</small>
   </div>
-  <div class="chart-wrapper">
-    <canvas ref="chartStock"></canvas>
-  </div>
   <div class="kpi-bar">
   <div class="kpi-box">
     <h3>Total Stock CPO</h3>
@@ -85,38 +82,60 @@
   <div class="divider"></div>
   <div class="kpi-box">
     <h3>Total Stock Kernel</h3>
-    <p>{{ stockData.length ? formatNumber(totalKernel) : '-' }}</p>
+    <p>{{ stockData.length ? formatNumber(totalPK) : '-' }}</p>
   </div>
 </div>
 
 </div>
 
 <!-- TABLE -->
-<h3 class="table-title">Recent Movement</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Tanggal</th>
-      <th>Produk</th>
-      <th>Tipe</th>
-      <th>Jumlah</th>
-      <th>Stock</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr v-for="item in stockData.slice(-10)" :key="item.id">
-      <td>{{ item.tanggal }}</td>
-      <td>
-        <span :class="['badge', item.produk === 'CPO' ? 'cpo' : 'pk']">
-          {{ item.produk }}
-        </span>
-      </td>
-      <td>{{ item.tipe }}</td>
-      <td>{{ formatNumber(item.jumlah) }}</td>
-      <td class="stock">{{ formatNumber(item.running_stock) }}</td>
-    </tr>
-  </tbody>
-</table>
+<div class="card">
+  <h3 class="table-title">Recent Movement</h3>
+
+  <div style="overflow-x:auto;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Produk</th>
+          <th>Tipe</th>
+          <th>Jumlah</th>
+          <th>Stock</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr v-for="item in stockData.slice(-10)" :key="item.id">
+          <td>{{ item.tanggal }}</td>
+
+          <td>
+            <span :class="['badge', item.produk === 'CPO' ? 'cpo' : 'pk']">
+              {{ item.produk }}
+            </span>
+          </td>
+
+          <!-- 🔥 Tipe (badge IN/OUT) -->
+          <td>
+            <span :class="['badge', item.tipe === 'IN' ? 'in' : 'out']">
+              {{ item.tipe }}
+            </span>
+          </td>
+
+          <!-- 🔥 Jumlah (+ / -) -->
+          <td>
+            <span :class="item.tipe === 'IN' ? 'plus' : 'minus'">
+              {{ item.tipe === 'IN' ? '+' : '-' }}{{ formatNumber(item.jumlah) }}
+            </span>
+          </td>
+
+          <td class="stock">
+            {{ formatNumber(item.running_stock) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 </div>
 
 </template>
@@ -150,7 +169,15 @@ computed: {
   totalPK() {
     const pk = this.stockData.filter(i => i.produk === "PK")
     return pk.length ? pk[pk.length - 1].running_stock || 0 : 0
-}
+  },
+
+  filteredMillList() {
+    if (!this.company_code) return this.millList
+
+    return this.millList.filter(
+      m => m.company_code === this.company_code
+    )
+  }
 },
 mounted(){
     this.fetchCompany()
@@ -169,10 +196,21 @@ mounted(){
   })
   },
 watch: {
-  company_code() { this.fetchStock() },
-  mill_code() { this.fetchStock() },
-  start_date() { this.fetchStock() },
-  end_date() { this.fetchStock() }
+  company_code() {
+    this.mill_code = "" // reset mill biar gak nyangkut
+  },
+
+  mill_code() {
+    this.fetchStock()
+  },
+
+  start_date() {
+    this.fetchStock()
+  },
+
+  end_date() {
+    this.fetchStock()
+  }
 },
 methods:{
   getCompanyName(code) {
@@ -180,7 +218,7 @@ methods:{
     return c ? c.company_name : code
   },
 
-getMillName(code) {
+  getMillName(code) {
     const m = this.millList.find(i => i.mill_code === code)
     return m ? m.mill_name : code
   },
@@ -222,64 +260,48 @@ getMillName(code) {
     this.millList = await res.json()
   },
   createChart() {
-    // ⛔ HANDLE DATA KOSONG
-    if (!this.stockData.length) {
-      if (this.chart) this.chart.destroy()
-      return
+  if (!this.$refs.chartStock) return
+
+  if (!this.stockData.length) {
+    if (this.chart) this.chart.destroy()
+    return
+  }
+
+  if (this.chart) {
+    this.chart.destroy()
+  }
+  const ctx = this.$refs.chartStock.getContext("2d")
+  const grouped = {}
+  this.stockData.forEach(item => {
+    if (item.produk === "CPO") {
+      grouped[item.tanggal] = item.running_stock
     }
-    if (this.chart) {
-      this.chart.destroy()
+  })
+  const labels = Object.keys(grouped).slice(-7)
+  const values = Object.values(grouped).slice(-7)
+  this.chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Stock CPO",
+        data: values,
+        backgroundColor: "#16a34a",
+        borderRadius: 10
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
     }
-    const ctx = this.$refs.chartStock.getContext("2d")
-    // 🔥 ambil data per tanggal (CPO saja dulu)
-    const grouped = {}
-    this.stockData.forEach(item => {
-      if (item.produk === "CPO") {
-        grouped[item.tanggal] = item.running_stock
-      }
-    })
-    const labels = Object.keys(grouped).slice(-7)
-    const values = Object.values(grouped).slice(-7)
-    // 🎨 GRADIENT (EFEK TABUNG)
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400)
-    gradient.addColorStop(0, "#86efac")
-    gradient.addColorStop(1, "#16a34a")
-    this.chart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: "Stock CPO",
-            data: values, // 🔥 ini yang benar
-            backgroundColor: gradient,
-            borderRadius: 10,
-            borderSkipped: false
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        layout: {
-          padding: 0
-        },
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          x: {
-            grid: {display: false}
-          },
-          y: {
-            grid: {color: "#eee"}
-          }
-        }
-      }
-    })
-  }
-  }
-  }
+  })
+
+  setTimeout(() => {
+    window.dispatchEvent(new Event("resize"))
+  }, 100)
+}
+}
+}
 </script>
 
 <style scoped>
@@ -287,6 +309,7 @@ getMillName(code) {
 .content {
   padding: 30px 40px; /* jangan 0 */
   }
+
 .container{
   padding:20px 40px;
   max-width:1500px;
@@ -294,12 +317,12 @@ getMillName(code) {
   }
 
 .filter-info {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 10px;
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
   }
 
 .filter-grid{
@@ -358,6 +381,16 @@ getMillName(code) {
   border:1px solid #ddd;
   border-radius:8px;
   }
+
+.badge.in {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge.out {
+  background: #fee2e2;
+  color: #dc2626;
+}
 
 .kpi-bar{
   position: relative;
@@ -469,6 +502,17 @@ getMillName(code) {
 
 .modal-action{
   margin-top:10px;
-  text-align:right;}
+  text-align:right;
+  }
+
+  .plus {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.minus {
+  color: #dc2626;
+  font-weight: 600;
+}
 
 </style>
