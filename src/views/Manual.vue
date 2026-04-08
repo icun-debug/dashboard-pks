@@ -2,6 +2,62 @@
   <div class="page-container">
     <h1 class="page-title">🚛 Input Manual</h1>
 
+    <div class="filter-card">
+
+  <div class="filter-container">
+
+    <!-- DATE -->
+    <input 
+      type="text"
+      class="date-range"
+      placeholder="Pilih Tanggal"
+    />
+
+    <!-- COMPANY -->
+    <select v-model="selectedPT">
+      <option value="">All Company</option>
+      <option 
+        v-for="c in companyData" 
+        :key="c.company_code" 
+        :value="c.company_code"
+      >
+        {{ c.company_name }}
+      </option>
+    </select>
+
+    <!-- MILL -->
+    <select v-model="selectedMill">
+      <option value="">All Mill</option>
+      <option 
+        v-for="m in filteredMillList" 
+        :key="m.mill_code" 
+        :value="m.mill_code"
+      >
+        {{ m.mill_name }}
+      </option>
+    </select>
+
+    <!-- BUTTON -->
+    <button class="apply-btn" @click="applyFilter">
+      🔍 Apply Filter
+    </button>
+
+  </div>
+
+</div>
+
+<div class="filter-info" v-if="selectedPT || selectedMill || start_date">
+  <span v-if="start_date">
+    📅 {{ start_date }} - {{ end_date }}
+  </span>
+  <span v-if="company_code">
+    🏢 {{ getCompanyName(selectedPT) }}
+  </span>
+  <span v-if="mill_code">
+    🏭 {{ getMillName(selectedMill) }}
+  </span>
+</div>
+
     <div class="action-bar">
       <button class="btn-primary" @click="openModal">
         + Input Pengiriman
@@ -111,8 +167,12 @@
 
         <div class="modal-actions">
           <button class="btn-secondary" @click="closeModal">Batal</button>
-          <button class="btn-primary" @click="submitData">
-            Simpan
+          <button 
+            class="btn-primary" 
+            @click="submitData"
+            :disabled="loading"
+            >
+            {{ loading ? "⏳ Menyimpan..." : "Simpan" }}
           </button>
         </div>
       </div>
@@ -122,13 +182,18 @@
 
 <script>
 import "flatpickr/dist/flatpickr.css"
+import flatpickr from "flatpickr";
 export default {
   name: "Pengiriman",
 
   data() {
     return {
+      start_date: "",
+      end_date: "",
+
       shipments: [],
       showModal: false,
+      loading: false,
 
       companyData: [],
       selectedPT: "",
@@ -146,6 +211,17 @@ export default {
   },
 
   async mounted() {
+    flatpickr(".date-range", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    onClose: (selectedDates) => {
+      if (selectedDates.length === 2) {
+        this.start_date = selectedDates[0].toISOString().split("T")[0]
+        this.end_date = selectedDates[1].toISOString().split("T")[0]
+      }
+    }
+  })
+
   try {
     const [companyRes, shipmentRes] = await Promise.all([
       fetch("http://127.0.0.1:8000/company-mill"),
@@ -174,9 +250,8 @@ export default {
   }
 },
 
-  watch: {
-  selectedPT(newVal){
-    console.log("PT berubah:", newVal)
+watch: {
+  selectedPT() {
     this.selectedMill = ""
   }
 },
@@ -191,30 +266,66 @@ computed: {
       })
     })
     return map
+  },
+  filteredMillList() {
+    if (!this.selectedPT) return this.companyData.flatMap(c => c.mills)
+
+    const selected = this.companyData.find(c => c.company_code === this.selectedPT)
+    return selected ? selected.mills : []
   }
 },
 
   methods: {
 
+    applyFilter(){
+      this.fetchData()
+    },
     // 🔥 ambil company & mill
     async fetchCompany() {
-  try {
-    const res = await fetch("http://127.0.0.1:8000/company-mill")
-    const data = await res.json()
+    try {
+      // ✅ DEBUG TARUH DI SINI
+      console.log("PT:", this.selectedPT)
+      console.log("MILL:", this.selectedMill)
+      console.log("DATE:", this.start_date, this.end_date)
 
-    console.log("🏢 COMPANY:", data)
+      const res = await fetch("http://127.0.0.1:8000/company-mill")
+      const data = await res.json()
 
-    this.companyData = data
+      console.log("🏢 COMPANY:", data)
 
-  } catch (err) {
-    console.error("❌ COMPANY ERROR:", err)
-  }
-},
+      this.companyData = data
+
+      } catch (err) {
+        console.error("❌ COMPANY ERROR:", err)
+      }
+    },
 
     // 🔥 ambil shipment
-   async fetchData() {
-  try {
-    const res = await fetch("http://127.0.0.1:8000/shipments")
+      async fetchData() {
+      try {
+
+    // 🔥 BASE URL
+    let url = "http://127.0.0.1:8000/shipments?"
+
+    // 🔥 FILTER PT
+    if (this.selectedPT) {
+      url += `company_code=${this.selectedPT}&`
+    }
+
+    // 🔥 FILTER MILL
+    if (this.selectedMill) {
+      url += `mill_code=${this.selectedMill}&`
+    }
+
+    // 🔥 FILTER TANGGAL
+    if (this.start_date && this.end_date) {
+      url += `start_date=${this.start_date}&end_date=${this.end_date}&`
+    }
+
+    console.log("🌐 FINAL URL:", url)
+
+    // 🔥 FETCH DARI URL YANG SUDAH DIFILTER
+    const res = await fetch(url)
     const data = await res.json()
 
     console.log("🔥 RAW API:", data)
@@ -235,7 +346,7 @@ computed: {
   } catch (err) {
     console.error("❌ ERROR FETCH:", err)
   }
-    },
+  },
 
     // 🔥 TAMBAH DI SINI
     
@@ -321,6 +432,8 @@ computed: {
 
       } catch (err) {
         console.error(err)
+      } finally {
+        
       }
     },
 
@@ -346,6 +459,12 @@ computed: {
 </script>
 
 <style scoped>
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
 .page-container {
   padding: 20px;
 }
