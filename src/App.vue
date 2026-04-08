@@ -12,6 +12,7 @@
 
     <nav>
       <router-link to="/">📊 Dashboard</router-link>
+
       <div @click="openProduksi = !openProduksi" class="menu-title clickable">
       🏭 Produksi {{ openProduksi ? "▾" : "▸" }}
       </div>
@@ -19,6 +20,7 @@
         <router-link to="/produksi" exact-active-class="active-link">📄 Produksi</router-link>
         <router-link to="/produksi/supply-estate" exact-active-class="active-link">🌴 Supply Estate</router-link>
       </div>
+
       <div @click="openMass = !openMass" class="menu-title clickable">
       📊 Mass Balance {{ openMass ? "▾" : "▸" }}
       </div>
@@ -26,8 +28,17 @@
         <router-link to="/mass-balance" exact-active-class="active-link">🏭 Mass Balance</router-link>
         <router-link to="/mass-balance/book-claim" exact-active-class="active-link">🌱 Book & Claim</router-link>
       </div>
+
       <router-link to="/stockcpo">🛢 Stock CPO</router-link>
-      <router-link to="/pengiriman">📦 Shipment</router-link>
+
+      <div @click="openShipment = !openShipment" class="menu-title clickable">
+        📦 Shipment {{ openShipment ? "▾" : "▸" }}
+      </div>
+      <div v-if="openShipment" class="submenu">
+        <router-link to="/shipment/timbangan" exact-active-class="active-link">🚜 Data Timbangan</router-link>
+        <router-link to="/shipment/manual" exact-active-class="active-link">🧾 Input Manual</router-link>
+      </div>
+
       <a>📑 Report</a>
     </nav>
 
@@ -51,7 +62,8 @@ export default {
   data() {
     return {
       openProduksi: false,
-      openMass: false
+      openMass: false,
+      openShipment: false
     }
   }
  

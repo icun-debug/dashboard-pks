@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <h1 class="page-title">🚛 Pengiriman CPO / PK</h1>
+    <h1 class="page-title">🚛 Input Manual</h1>
 
     <div class="action-bar">
       <button class="btn-primary" @click="openModal">
@@ -19,6 +19,7 @@
             <th>Qty</th>
             <th>Tujuan</th>
             <th>No DO</th>
+            <th>RSPO</th>
           </tr>
         </thead>
         <tbody>
@@ -30,6 +31,7 @@
             <td>{{ formatNumber(item.jumlah) }}</td>
             <td>{{ item.tujuan }}</td>
             <td>{{ item.no_do }}</td>
+            <td>{{ item.rspo || '-' }}</td>
           </tr>
         </tbody>
       </table>
@@ -84,6 +86,15 @@
         </div>
 
         <div class="form-group">
+          <label>RSPO</label>
+          <select v-model="form.rspo">
+            <option value="">Pilih RSPO</option>
+            <option value="CERTIFIED">Certified</option>
+            <option value="NON">Non-RSPO</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>Jumlah (Kg)</label>
           <input type="number" v-model="form.qty" />
         </div>
@@ -128,7 +139,8 @@ export default {
         product: "CPO",
         qty: 0,
         destination: "",
-        do_number: ""
+        do_number: "",
+        rspo: ""
       }
     }
   },
@@ -153,7 +165,8 @@ export default {
       produk: item.product || item.produk,
       jumlah: item.qty || item.jumlah,
       tujuan: item.destination || item.tujuan,
-      no_do: item.do_number || item.no_do
+      no_do: item.do_number || item.no_do,
+      rspo: item.rspo_type
     }))
 
   } catch (err) {
@@ -215,7 +228,8 @@ computed: {
       produk: item.product || item.produk,
       jumlah: item.qty || item.jumlah,
       tujuan: item.destination || item.tujuan,
-      no_do: item.do_number || item.no_do
+      no_do: item.do_number || item.no_do,
+      rspo: item.rspo_type
     }))
 
   } catch (err) {
@@ -253,7 +267,8 @@ computed: {
         product: "CPO",
         qty: 0,
         destination: "",
-        do_number: ""
+        do_number: "",
+        rspo: ""
       }
       this.selectedPT = ""
       this.selectedMill = ""
@@ -280,7 +295,8 @@ computed: {
             destination: this.form.destination,
             do_number: this.form.do_number,
             pt: this.selectedPT,
-            mill: this.selectedMill
+            mill: this.selectedMill,
+            rspo: this.form.rspo
           })
         })
 
@@ -301,7 +317,7 @@ computed: {
         })
 
         this.closeModal()
-        this.fetchData()
+        await this.fetchData()
 
       } catch (err) {
         console.error(err)

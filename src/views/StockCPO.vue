@@ -96,6 +96,8 @@
     <table class="table">
       <thead>
         <tr>
+          <th>PT</th>
+          <th>Mill</th>
           <th>Tanggal</th>
           <th>Produk</th>
           <th>Tipe</th>
@@ -105,7 +107,10 @@
       </thead>
 
       <tbody>
+
         <tr v-for="item in stockData.slice(-10)" :key="item.id">
+          <td>{{ item.pt || '-' }}</td>
+          <td>{{ item.mill || '-' }}</td>
           <td>{{ item.tanggal }}</td>
 
           <td>

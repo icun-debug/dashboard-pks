@@ -2,13 +2,13 @@
   <div>
     <h1></h1>
 
-    <!-- nanti isi anak halaman di sini -->
+    <!-- 🔥 WAJIB -->
     <router-view />
   </div>
 </template>
 
 <script>
 export default {
-  name: "MassBalance"
+  name: "Shipment"
 }
 </script>
