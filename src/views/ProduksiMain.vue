@@ -318,6 +318,9 @@ console.log("FILTERED:", filtered)
 console.log("FLOW DATA:", flowData)
 
 this.produksi = flowData
+// 🔥 TAMBAH DI SINI
+localStorage.setItem("produksi_data", JSON.stringify(this.produksi))
+console.log("SAVED PRODUKSI:", this.produksi)
 
 // 🔥 PROTECT KPI
 try{
