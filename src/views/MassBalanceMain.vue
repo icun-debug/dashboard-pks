@@ -6,14 +6,14 @@
     <!-- FILTER -->
     <div class="filter-card">
 
-  <div class="filter-grid">
+  <div class="filter-container">
 
     <!-- DATE -->
     <input 
-      type="text" 
-      ref="dateRange" 
+      type="text"  
       class="input"
       placeholder="Pilih Tanggal"
+      ref="dateRange"
     />
 
     <!-- COMPANY -->
@@ -41,8 +41,8 @@
 </select>
 
     <!-- BUTTON -->
-    <button class="btn-apply" @click="fetchData">
-      Apply Filter
+    <button class="apply-btn" @click="fetchData">
+      🔍 Apply Filter
     </button>
 
   </div>
@@ -285,11 +285,12 @@ export default {
   margin-bottom: 20px;
 }
 
-.filter-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
-  gap: 12px;
-}
+.filter-container{
+  display:flex;
+  gap:15px;
+  flex-wrap:nowrap;
+  align-items: center;
+  }
 
 .input {
   padding: 10px;
@@ -297,11 +298,10 @@ export default {
   border: 1px solid #ddd;
 }
 
-.btn-apply {
-  background: #1f2937;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
+.apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 </style>

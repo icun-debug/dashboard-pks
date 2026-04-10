@@ -6,7 +6,7 @@
 
 <!-- FILTER CARD -->
 <div class="filter-card">
-<div class="filter-grid">
+<div class="filter-container">
 
 <input
 type="text"
@@ -29,61 +29,93 @@ ref="dateRange"
 </option>
 </select>
 
-<button class="btn-filter" @click="applyFilter">Apply Filter</button>
+<button class="apply-btn" @click="applyFilter">🔍 Apply Filter</button>
 
 </div>
 </div>
 
-<!-- KPI -->
-<div class="kpi-grid">
+<!-- KPI ROW ATAS -->
+<div class="kpi-grid top">
 
-<div class="kpi-card">
-  <div class="kpi-header">
-    <p>TBS Masuk</p>
-    <span :class="['trend', kpiTrend.tbs >= 0 ? 'up' : 'down']">
-      {{ kpiTrend.tbs >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.tbs) }}%
-    </span>
+  <!-- TBS Masuk -->
+  <div class="kpi-card red">
+    <div class="kpi-header">
+      <p>TBS Masuk</p>
+      <span :class="['trend', kpiTrend.tbs >= 0 ? 'up' : 'down']">
+        {{ kpiTrend.tbs >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.tbs) }}%
+      </span>
+    </div>
+    <h2>{{ kpi.tbs }}</h2>
   </div>
-  <h2>{{ kpi.tbs }}</h2>
+
+  <!-- TBS Olah -->
+  <div class="kpi-card green">
+    <div class="kpi-header">
+      <p>TBS Olah</p>
+      <span class="trend up">▲</span>
+    </div>
+    <h2>{{ kpi.olah }}</h2>
+  </div>
+
+  <!-- Restan -->
+  <div :class="['kpi-card yellow', getRestanStatus(kpi.restan)]">
+    <div class="kpi-header">
+      <p>Restan</p>
+      <span :class="['trend', getRestanStatus(kpi.restan)]">
+        {{ getRestanIcon(kpi.restan) }}
+      </span>
+    </div>
+    <h2>{{ kpi.restan }}</h2>
+  </div>
+
+  <!-- CPO -->
+  <div class="kpi-card green">
+    <div class="kpi-header">
+      <p>CPO Produksi</p>
+      <span :class="['trend', kpiTrend.cpo >= 0 ? 'up' : 'down']">
+        {{ kpiTrend.cpo >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.cpo) }}%
+      </span>
+    </div>
+    <h2>{{ kpi.cpo }}</h2>
+  </div>
+
+  <!-- ✅ NEW: KERNEL -->
+  <div class="kpi-card orange">
+    <div class="kpi-header">
+      <p>Kernel Produksi</p>
+      <span :class="['trend', kpiTrend.kernel >= 0 ? 'up' : 'down']">
+        {{ kpiTrend.kernel >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.kernel) }}%
+      </span>
+    </div>
+    <h2>{{ kpi.kernel }}</h2>
+  </div>
+
 </div>
 
-<div class="kpi-card">
-  <div class="kpi-header">
-    <p>TBS Olah</p>
-    <span class="trend up">▲</span>
-  </div>
-  <h2>{{ kpi.olah }}</h2>
-</div>
+<!-- KPI ROW BAWAH -->
+<div class="kpi-grid bottom">
 
-<div :class="['kpi-card', getRestanStatus(kpi.restan)]">
-  <div class="kpi-header">
-    <p>Restan</p>
-    <span :class="['trend', getRestanStatus(kpi.restan)]">
-      {{ getRestanIcon(kpi.restan) }}
-    </span>
+  <!-- OER -->
+  <div class="kpi-card wide blue">
+    <div class="kpi-header">
+      <p>OER (%)</p>
+      <span :class="['trend', kpiTrend.oer >= 0 ? 'up' : 'down']">
+        {{ kpiTrend.oer >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.oer) }}%
+      </span>
+    </div>
+    <h2>{{ kpi.oer }}</h2>
   </div>
-  <h2>{{ kpi.restan }}</h2>
-</div>
 
-<div class="kpi-card">
-  <div class="kpi-header">
-    <p>CPO Produksi</p>
-    <span :class="['trend', kpiTrend.cpo >= 0 ? 'up' : 'down']">
-      {{ kpiTrend.cpo >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.cpo) }}%
-    </span>
+  <!-- ✅ NEW: KER -->
+  <div class="kpi-card wide purple">
+    <div class="kpi-header">
+      <p>KER (%)</p>
+      <span :class="['trend', kpiTrend.ker >= 0 ? 'up' : 'down']">
+        {{ kpiTrend.ker >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.ker) }}%
+      </span>
+    </div>
+    <h2>{{ kpi.ker }}</h2>
   </div>
-  <h2>{{ kpi.cpo }}</h2>
-</div>
-
-<div class="kpi-card">
-  <div class="kpi-header">
-    <p>OER (%)</p>
-    <span :class="['trend', kpiTrend.oer >= 0 ? 'up' : 'down']">
-      {{ kpiTrend.oer >= 0 ? '▲' : '▼' }} {{ Math.abs(kpiTrend.oer) }}%
-    </span>
-  </div>
-  <h2>{{ kpi.oer }}</h2>
-</div>
 
 </div>
 
@@ -162,8 +194,8 @@ endDate:"",
 
 chart:null,
 
-kpi:{ tbs:0, cpo:0, oer:0, olah:0, restan:0 },
-kpiTrend:{ tbs:5, cpo:-2, oer:1.2 }
+kpi:{ tbs:0, cpo:0, oer:0, olah:0, restan:0, kernel:0, ker:0 },
+kpiTrend:{ tbs:0, cpo:0, oer:0, kernel:0, ker:0 }
 
 }
 },
@@ -335,17 +367,22 @@ calculateKPI(data){
   const cpo = data.reduce((s,i)=> s + (i.cpo || 0),0)
   const olah = data.reduce((s,i)=> s + (i.tbs_olah || 0),0)
   const restan = data.reduce((s,i)=> s + (i.restan || 0),0)
+  const kernel = data.reduce((s, i)=> s + (i.kernel || 0),0) 
 
   const avgOer = data.length
     ? data.reduce((s,i)=> s + (i.oer || 0),0) / data.length
     : 0
+
+  const ker = olah > 0 ? (kernel / olah) * 100 : 0
 
   this.kpi = {
     tbs: Math.round(tbs),
     olah: Math.round(olah),
     restan: Math.round(restan),
     cpo: Math.round(cpo),
-    oer: avgOer.toFixed(2)
+    kernel: Math.round(kernel),
+    oer: avgOer.toFixed(2),
+    ker: ker.toFixed(2)
   }
 
 },
@@ -425,8 +462,9 @@ XLSX.writeFile(wb, `produksi_${this.startDate}_${this.endDate}.xlsx`)
 
 <style scoped>
 
+
 .produksi-page{
-  padding:30px 0;
+  padding:0px 0 30px 0;
 }
 
 /* TITLE */
@@ -446,27 +484,50 @@ XLSX.writeFile(wb, `produksi_${this.startDate}_${this.endDate}.xlsx`)
   margin-bottom:10px;
 }
 
-.filter-grid{
-  display:grid;
-  grid-template-columns: minmax(350px,420px) 1fr 1fr auto;
-  gap:24px;
-  align-items:center;
+.filter-container{
+  display:flex;
+  gap:15px;
+  flex-wrap:nowrap;
+  align-items: center;
+  }
+
+.filter-container input,
+.filter-container select,
+.filter-container button {
+  height: 40px;
 }
 
-.filter-grid input,
-.filter-grid select{
-  height:46px;
-  padding:0 14px;
-  border:1px solid #e3e6ea;
-  border-radius:10px;
+.apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-/* KPI */
+/* KPI BASE */
 .kpi-grid{
   display:grid;
-  grid-template-columns: repeat(5,1fr);
   gap:20px;
   margin:30px 0;
+}
+
+/* ROW ATAS (5 CARD) */
+.kpi-grid.top{
+  grid-template-columns: repeat(5,1fr);
+  margin-bottom:15px;
+}
+
+/* ROW BAWAH (2 CARD FULL WIDTH) */
+.kpi-grid.bottom{
+  grid-template-columns: repeat(2,1fr);
+}
+
+.kpi-card.wide{
+  padding:25px;
+}
+
+.kpi-card.wide h2{
+  font-size:26px;
 }
 
 .kpi-card{
@@ -490,9 +551,12 @@ XLSX.writeFile(wb, `produksi_${this.startDate}_${this.endDate}.xlsx`)
 .kpi-card.warning::before{ background:#f1c40f; }
 .kpi-card.normal::before{ background:#2ecc71; }
 
-.kpi-card:nth-child(1)::before{ background:#e74c3c; }
-.kpi-card:nth-child(2)::before{ background:#2ecc71; }
-.kpi-card:nth-child(3)::before{ background:#f1c40f; }
+.kpi-card.red::before{ background:#e74c3c; }
+.kpi-card.green::before{ background:#2ecc71; }
+.kpi-card.yellow::before{ background:#f1c40f; }
+.kpi-card.orange::before{ background:#f39c12; }
+.kpi-card.blue::before{ background:#3498db; }
+.kpi-card.purple::before{ background:#8e44ad; }
 
 .kpi-header{
   display:flex;

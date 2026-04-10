@@ -1,6 +1,6 @@
 <template>
   <div class="page-container">
-    <h1 class="page-title">🚛 Input Manual</h1>
+    <h1 class="page-title"> Input Manual</h1>
 
     <div class="filter-card">
 
@@ -466,7 +466,7 @@ computed: {
   flex-wrap: wrap;
 }
 .page-container {
-  padding: 20px;
+  padding: 0px;
 }
 
 .page-title {

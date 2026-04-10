@@ -319,7 +319,7 @@ methods:{
   }
 
 .container{
-  padding:20px 40px;
+  padding:0px 40px;
   max-width:1500px;
   margin:auto;
   }
@@ -333,18 +333,33 @@ methods:{
   flex-wrap: wrap;
   }
 
-.filter-grid{
+.filter-container{
   display:flex;
-  gap:10px;
-  flex-wrap:wrap;
+  gap:15px;
+  flex-wrap:nowrap;
+  align-items: center;
   }
 
+.filter-container input,
+.filter-container select,
+.filter-container button {
+  height: 40px;
+}
+
 .date-range{
+  fkex: 2;
   height:40px;
   padding:0 10px;
   border-radius:8px;
   border:1px solid #ddd;
   }
+
+.apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
 
 .btn-add{
   margin:10px 0;
