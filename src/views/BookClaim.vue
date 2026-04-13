@@ -40,7 +40,19 @@
       </div>
     </div>
 
-    <!-- FORM CLAIM -->
+    <!-- FILTER -->
+    <div class="card">
+      <h3>Filter</h3>
+
+      <select v-model="selectedMill">
+        <option value="">All Mill</option>
+        <option v-for="m in millList" :key="m" :value="m">
+          {{ m }}
+        </option>
+      </select>
+    </div>
+
+    <!-- FORM -->
     <div class="card">
       <h3>Input Claim</h3>
 
@@ -56,7 +68,9 @@
         <input v-model.number="form.qty" type="number" placeholder="Qty" />
         <input v-model="form.buyer" type="text" placeholder="Buyer" />
 
-        <button @click="handleAddClaim">Tambah Claim</button>
+        <button class="btn-add" @click="handleAddClaim">
+          {{isEdit ? "Update Claim" : "Tambah Claim"}}
+        </button>
       </div>
     </div>
 
@@ -71,15 +85,20 @@
             <th>Produk</th>
             <th>Qty</th>
             <th>Buyer</th>
+            <th>Aksi</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr v-for="(c, i) in claimData" :key="i">
+          <tr v-for="(c, i) in filteredClaim" :key="i">
             <td>{{ c.tanggal }}</td>
             <td>{{ c.produk }}</td>
             <td>{{ c.qty }}</td>
             <td>{{ c.buyer }}</td>
+            <td>
+              <button @click="handleEdit(c)">Edit</button>
+              <button class="btn-delete" @click="deleteClaim(c)">Hapus</button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -89,65 +108,94 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref } from "vue"
-import { onMounted } from "vue"
+import { reactive, computed, ref, onMounted, watch } from "vue"
 
-  const bookSummary = reactive({
-    cpo: 0,
-    kernel: 0
-  })
+// STATE
+const selectedMill = ref("")
+const claimData = ref([])
 
-  const claimSummary = reactive({
-    cpo:0,
-    kernel:0
-  })
-  const claimData = ref([])
-
-  function getBookFromProduksi(data){
-    const cpo = data.reduce((s,i)=> s + (i.cpo || 0),0)
-    const kernel = data.reduce((s,i)=> s + (i.kernel || 0),0)
-
-    bookSummary.cpo = cpo
-    bookSummary.kernel = kernel
-  }
-
-  onMounted(() => {
-  const raw = localStorage.getItem("produksi_data")
-  console.log("RAW LS:", raw)
-  const data = JSON.parse(raw || "[]")
-  console.log("PARSED DATA:", data)
-
-  if (data.length) {
-    getBookFromProduksi(data)
-  }
+const bookSummary = reactive({
+  cpo: 0,
+  kernel: 0
 })
 
-  const form = reactive({
-    tanggal: "",
-    produk: "",
-    qty: 0,
-    buyer: ""
-  })
+const claimSummary = reactive({
+  cpo: 0,
+  kernel: 0
+})
 
-// HITUNG CLAIM
+const form = reactive({
+  tanggal: "",
+  produk: "",
+  qty: 0,
+  buyer: ""
+})
+
+// MILL LIST
+const millList = computed(() => {
+  const raw = JSON.parse(localStorage.getItem("produksi_data") || "[]")
+  return [...new Set(raw.map(i => i.mill_code))]
+})
+
+// BOOK
+function getBookFromProduksi(data){
+  let filtered = data
+
+  if(selectedMill.value){
+    filtered = data.filter(i => i.mill_code === selectedMill.value)
+  }
+
+  bookSummary.cpo = filtered.reduce((s,i)=> s + (i.cpo || 0),0)
+  bookSummary.kernel = filtered.reduce((s,i)=> s + (i.kernel || 0),0)
+}
+
+// CLAIM SUMMARY
 function calculateClaim(){
-  claimSummary.cpo = claimData.value
+
+  const data = selectedMill.value
+    ? claimData.value.filter(c => c.mill_code === selectedMill.value)
+    : claimData.value
+
+  claimSummary.cpo = data
     .filter(i => i.produk === "CPO")
     .reduce((s,i)=> s + i.qty,0)
 
-  claimSummary.kernel = claimData.value
+  claimSummary.kernel = data
     .filter(i => i.produk === "KERNEL")
     .reduce((s,i)=> s + i.qty,0)
-    }
+}
 
-  // BALANCE
-  const balance = computed(() => ({
-    cpo: bookSummary.cpo - claimSummary.cpo,
-    kernel: bookSummary.kernel - claimSummary.kernel
-  }))
+function handleEdit(item){
 
-  // ADD CLAIM
-  function handleAddClaim(){
+  form.tanggal = item.tanggal
+  form.produk = item.produk
+  form.qty = item.qty
+  form.buyer = item.buyer
+
+  editIndex.value = claimData.value.findIndex(c => c === item)
+  isEdit.value = true
+}
+
+// BALANCE
+const balance = computed(() => ({
+  cpo: bookSummary.cpo - claimSummary.cpo,
+  kernel: bookSummary.kernel - claimSummary.kernel
+}))
+
+// FILTER + SORT
+const filteredClaim = computed(() => {
+
+  let data = claimData.value
+
+  if (selectedMill.value) {
+    data = data.filter(c => c.mill_code === selectedMill.value)
+  }
+
+  return [...data].reverse()
+})
+
+// ADD CLAIM
+function handleAddClaim(){
 
   if(!form.produk || !form.qty){
     alert("Lengkapi data!")
@@ -164,15 +212,73 @@ function calculateClaim(){
     return
   }
 
-  claimData.value.push({...form})
+  // 🔥 INI BAGIAN EDIT / ADD
+  if(isEdit.value){
+
+    claimData.value[editIndex.value] = {
+      ...form,
+      mill_code: selectedMill.value
+    }
+
+    isEdit.value = false
+    editIndex.value = null
+
+  } else {
+
+    claimData.value.push({
+      ...form,
+      mill_code: selectedMill.value
+    })
+
+  }
+
+  localStorage.setItem("claim_data", JSON.stringify(claimData.value))
+
   calculateClaim()
 
-  // reset form
-  form.tanggal = ""
+  // reset
+  form.tanggal = new Date().toISOString().slice(0,10)
   form.produk = ""
   form.qty = 0
   form.buyer = ""
 }
+
+// DELETE CLAIM
+function deleteClaim(item){
+  const index = claimData.value.findIndex(c => c === item)
+
+  if(index !== -1){
+    claimData.value.splice(index,1)
+  }
+
+  calculateClaim()
+  localStorage.setItem("claim_data", JSON.stringify(claimData.value))
+}
+
+// WATCH
+watch(selectedMill, () => {
+  const raw = JSON.parse(localStorage.getItem("produksi_data") || "[]")
+  getBookFromProduksi(raw)
+  calculateClaim()
+})
+
+// INIT
+onMounted(() => {
+  form.tanggal = new Date().toISOString().slice(0,10)
+
+  const produksi = JSON.parse(localStorage.getItem("produksi_data") || "[]")
+  if(produksi.length){
+    getBookFromProduksi(produksi)
+  }
+
+  const isEdit = ref(false)
+  const editIndex = ref(null)
+  const savedClaim = JSON.parse(localStorage.getItem("claim_data") || "[]")
+  if(savedClaim.length){
+    claimData.value = savedClaim
+    calculateClaim()
+  }
+})
 </script>
 
 <style scoped>
@@ -197,5 +303,31 @@ function calculateClaim(){
   display:grid;
   grid-template-columns: repeat(5,1fr);
   gap:10px;
+}
+
+.btn-add {
+  padding: 8px;
+  border-radius: 6px;
+  background: #2c3e50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-add:hover {
+  background: #1a252f;
+}
+
+.btn-delete {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #e74c3c;
+  color: white;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background: #c0392b;
 }
 </style>
