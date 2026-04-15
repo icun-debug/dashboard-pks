@@ -3,6 +3,16 @@
 
     <h2>Book & Claim</h2>
 
+    <!-- FILTER -->
+    <div class="card">
+      <h3>Filter</h3>
+          <select v-model="selectedMill">
+          <option value="">All Mill</option>
+          <option v-for="m in millList" :key="m" :value="m">
+          {{ m }}
+        </option>
+      </select>
+
     <!-- SUMMARY -->
     <div class="card">
       <h3>Summary</h3>
@@ -40,16 +50,6 @@
       </div>
     </div>
 
-    <!-- FILTER -->
-    <div class="card">
-      <h3>Filter</h3>
-
-      <select v-model="selectedMill">
-        <option value="">All Mill</option>
-        <option v-for="m in millList" :key="m" :value="m">
-          {{ m }}
-        </option>
-      </select>
     </div>
 
     <!-- FORM -->
@@ -57,8 +57,14 @@
       <h3>Input Claim</h3>
 
       <div class="form-grid">
+        <select v-model="form.mill_code">
+            <option value="">Pilih Mill</option>
+            <option v-for="m in millList" :key="m" :value="m">
+              {{ m }}
+            </option>
+          </select>
+
         <input v-model="form.tanggal" type="date" />
-        
         <select v-model="form.produk">
           <option value="">Pilih Produk</option>
           <option value="CPO">CPO</option>
@@ -81,6 +87,7 @@
       <table class="table">
         <thead>
           <tr>
+            <th>Mill</th>
             <th>Tanggal</th>
             <th>Produk</th>
             <th>Qty</th>
@@ -91,6 +98,7 @@
 
         <tbody>
           <tr v-for="(c, i) in filteredClaim" :key="i">
+            <td>{{ c.mill_code || '-'}}</td>
             <td>{{ c.tanggal }}</td>
             <td>{{ c.produk }}</td>
             <td>{{ c.qty }}</td>
@@ -113,6 +121,8 @@ import { reactive, computed, ref, onMounted, watch } from "vue"
 // STATE
 const selectedMill = ref("")
 const claimData = ref([])
+const isEdit = ref(false)
+const editIndex = ref(null)
 
 const bookSummary = reactive({
   cpo: 0,
@@ -128,7 +138,8 @@ const form = reactive({
   tanggal: "",
   produk: "",
   qty: 0,
-  buyer: ""
+  buyer: "",
+  mill_code: ""
 })
 
 // MILL LIST
@@ -171,6 +182,7 @@ function handleEdit(item){
   form.produk = item.produk
   form.qty = item.qty
   form.buyer = item.buyer
+  form.mill_code = item.mill_code
 
   editIndex.value = claimData.value.findIndex(c => c === item)
   isEdit.value = true
@@ -197,10 +209,16 @@ const filteredClaim = computed(() => {
 // ADD CLAIM
 function handleAddClaim(){
 
-  if(!form.produk || !form.qty){
-    alert("Lengkapi data!")
-    return
-  }
+  if(
+  !form.tanggal ||
+  !form.produk ||
+  !form.qty ||
+  !form.buyer ||
+  !form.mill_code 
+){
+  alert("Lengkapi semua field!")
+  return
+}
 
   if(form.produk === "CPO" && form.qty > balance.value.cpo){
     alert("Claim CPO melebihi Book!")
@@ -217,17 +235,18 @@ function handleAddClaim(){
 
     claimData.value[editIndex.value] = {
       ...form,
-      mill_code: selectedMill.value
+      mill_code: form.mill_code
     }
 
     isEdit.value = false
     editIndex.value = null
 
   } else {
+    console.log(form.mill_code)
 
     claimData.value.push({
       ...form,
-      mill_code: selectedMill.value
+      mill_code: form.mill_code
     })
 
   }
@@ -241,6 +260,7 @@ function handleAddClaim(){
   form.produk = ""
   form.qty = 0
   form.buyer = ""
+  form.mill_code = ""
 }
 
 // DELETE CLAIM
@@ -271,8 +291,6 @@ onMounted(() => {
     getBookFromProduksi(produksi)
   }
 
-  const isEdit = ref(false)
-  const editIndex = ref(null)
   const savedClaim = JSON.parse(localStorage.getItem("claim_data") || "[]")
   if(savedClaim.length){
     claimData.value = savedClaim
@@ -301,8 +319,15 @@ onMounted(() => {
 
 .form-grid{
   display:grid;
-  grid-template-columns: repeat(5,1fr);
+  grid-template-columns: repeat(6,1fr);
   gap:10px;
+}
+
+.form-grid select,
+.form-grid input {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 .btn-add {
@@ -316,6 +341,24 @@ onMounted(() => {
 
 .btn-add:hover {
   background: #1a252f;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: #f5f6fa;
+  font-weight: 600;
+}
+
+.table tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.table td:first-child {
+  font-weight: 600;
 }
 
 .btn-delete {
