@@ -3,20 +3,15 @@
 
     <h2>Book & Claim</h2>
 
-    <!-- FILTER -->
+    <!-- SUMMARY -->
     <div class="card">
-      <h3>Filter</h3>
+      <h3>Summary</h3>
           <select v-model="selectedMill">
           <option value="">All Mill</option>
           <option v-for="m in millList" :key="m" :value="m">
           {{ m }}
         </option>
       </select>
-
-    <!-- SUMMARY -->
-    <div class="card">
-      <h3>Summary</h3>
-
       <div class="summary-grid">
         <div>
           <p>Book CPO</p>
@@ -112,7 +107,6 @@
       </table>
     </div>
 
-  </div>
 </template>
 
 <script setup>
@@ -372,5 +366,13 @@ onMounted(() => {
 
 .btn-delete:hover {
   background: #c0392b;
+}
+
+.mill-badge {
+  background: #3498db;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
 }
 </style>

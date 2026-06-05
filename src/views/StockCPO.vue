@@ -9,9 +9,10 @@
 
     <!-- DATE -->
     <input 
-      type="text"
-      class="date-range"
-      placeholder="Pilih Tanggal"
+        ref="datePicker"
+        type="text"
+        class="date-range"
+        placeholder="Pilih Tanggal"
     />
 
     <!-- COMPANY -->
@@ -155,70 +156,95 @@ export default {
 data(){
 return{
     stockData: [],
-    dateRange: "",
+    dateText: "",
     company_code: "",
     mill_code: "",
     start_date: "",
     end_date: "",
     chart: null,
 
+    
     companyList: [],
     millList: []
   }
 },
 computed: {
+
   totalCPO() {
     const cpo = this.stockData.filter(i => i.produk === "CPO")
-    return cpo.length ? cpo[cpo.length - 1].running_stock : 0
+    return cpo.length
+      ? cpo[cpo.length - 1].running_stock
+      : 0
   },
+
   totalPK() {
     const pk = this.stockData.filter(i => i.produk === "PK")
-    return pk.length ? pk[pk.length - 1].running_stock || 0 : 0
+    return pk.length
+      ? pk[pk.length - 1].running_stock || 0
+      : 0
   },
 
   filteredMillList() {
-    if (!this.company_code) return this.millList
 
-    return this.millList.filter(
-      m => m.company_code === this.company_code
+    let mills = this.millList
+
+    if (this.company_code) {
+      mills = mills.filter(
+        m => m.company_code === this.company_code
+      )
+    }
+
+    return mills.filter((mill, index, self) =>
+      index === self.findIndex(
+        m => m.mill_code === mill.mill_code
+      )
     )
   }
+
 },
 mounted(){
     this.fetchCompany()
     this.fetchMill()
     this.fetchStock()
 
-    flatpickr(".date-range", {
-    mode: "range",
-    dateFormat: "Y-m-d",
-    onClose: (selectedDates) => {
-      if (selectedDates.length === 2) {
-        this.start_date = selectedDates[0].toISOString().split("T")[0]
-        this.end_date = selectedDates[1].toISOString().split("T")[0]
+    flatpickr(this.$refs.datePicker, {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      onChange: (selectedDates, dateStr) => {
+
+        this.dateText = dateStr
+
+        if (selectedDates.length === 2) {
+          this.start_date =
+            selectedDates[0].toISOString().split("T")[0]
+
+          this.end_date =
+            selectedDates[1].toISOString().split("T")[0]
       }
     }
   })
-  },
-watch: {
-  selectedCompany() {
-    this.selectedMill = null
-  }
 },
-methods:{
-  getCompanyName(code) {
-    const c = this.companyList.find(i => i.company_code === code)
-    return c ? c.company_name : code
+  watch: {
+    company_code() {
+      this.mill_code = ""
+    }
   },
+
+  methods:{
+    getCompanyName(code) {
+      const c = this.companyList.find(i => i.company_code === code)
+      return c ? c.company_name : code
+    },
 
   getMillName(code) {
     const m = this.millList.find(i => i.mill_code === code)
     return m ? m.mill_name : code
   },
   applyFilter() {
-    console.log("PT:", this.selectedCompany)
-    console.log("Mill:", this.selectedMill)
-    console.log("Date:", this.dateRange)
+    console.log("APPLY FILTER DIKLIK")
+    console.log("PT:", this.company_code)
+    console.log("Mill:", this.mill_code)
+    console.log("Date:", this.start_date, this.end_date)
     this.fetchStock()
   },
   formatNumber(v) {
@@ -226,28 +252,31 @@ methods:{
   },
   async fetchStock() {
   try {
+
     let url = "http://127.0.0.1:8000/stock-final?"
 
-    // ✅ COMPANY
-    if (this.selectedCompany && this.selectedCompany !== "All Company") {
-      url += `company_code=${encodeURIComponent(this.selectedCompany)}&`
+    // COMPANY
+    if (this.company_code) {
+      url += `company_code=${encodeURIComponent(this.company_code)}&`
     }
 
-    // ✅ MILL
-    if (this.selectedMill && this.selectedMill !== "All Mill") {
-      url += `mill_code=${encodeURIComponent(this.selectedMill)}&`
+    // MILL
+    if (this.mill_code) {
+      url += `mill_code=${encodeURIComponent(this.mill_code)}&`
     }
 
-    // ✅ DATE
-    if (this.dateRange) {
-      const [start, end] = this.dateRange.split(" to ")
-      url += `start_date=${start}&end_date=${end}`
+    // DATE
+    if (this.start_date && this.end_date) {
+      url += `start_date=${this.start_date}&end_date=${this.end_date}&`
     }
 
-    console.log("FINAL URL:", url) // 🔥 debug penting
+    console.log("FINAL URL:", url)
 
     const res = await fetch(url)
     const data = await res.json()
+
+    console.log("FINAL URL :", url)
+    console.log("DATA FILTER :", data)
 
     this.stockData = data
 
@@ -256,7 +285,7 @@ methods:{
     })
 
   } catch (err) {
-    console.error(err)
+    console.error("Fetch Stock Error:", err)
   }
   },
   async fetchCompany() {
@@ -268,6 +297,7 @@ methods:{
     this.millList = await res.json()
   },
   createChart() {
+
   if (!this.$refs.chartStock) return
 
   if (!this.stockData.length) {
@@ -278,25 +308,61 @@ methods:{
   if (this.chart) {
     this.chart.destroy()
   }
+
   const ctx = this.$refs.chartStock.getContext("2d")
-  const grouped = {}
+
+  // GROUP DATA
+  const groupedCPO = {}
+  const groupedPK = {}
+
   this.stockData.forEach(item => {
+
     if (item.produk === "CPO") {
-      grouped[item.tanggal] = item.running_stock
+      groupedCPO[item.tanggal] = item.running_stock
     }
+
+    if (item.produk === "PK") {
+      groupedPK[item.tanggal] = item.running_stock
+    }
+
   })
-  const labels = Object.keys(grouped).slice(-7)
-  const values = Object.values(grouped).slice(-7)
+
+  // LABEL TANGGAL GABUNGAN
+  const labels = [
+    ...new Set([
+      ...Object.keys(groupedCPO),
+      ...Object.keys(groupedPK)
+    ])
+  ].slice(-7)
+
+  // VALUE
+  const cpoValues = labels.map(
+    d => groupedCPO[d] || 0
+  )
+
+  const pkValues = labels.map(
+    d => groupedPK[d] || 0
+  )
+
+  // CHART
   this.chart = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
-      datasets: [{
-        label: "Stock CPO",
-        data: values,
-        backgroundColor: "#16a34a",
-        borderRadius: 10
-      }]
+      datasets: [
+        {
+          label: "Stock CPO",
+          data: cpoValues,
+          backgroundColor: "#16a34a",
+          borderRadius: 10
+        },
+        {
+          label: "Stock Kernel",
+          data: pkValues,
+          backgroundColor: "#f59e0b",
+          borderRadius: 10
+        }
+      ]
     },
     options: {
       responsive: true,
@@ -307,235 +373,236 @@ methods:{
   setTimeout(() => {
     window.dispatchEvent(new Event("resize"))
   }, 100)
-}
-}
-}
+
+} // createChart
+} // methods
+} // export default
 </script>
 
 <style scoped>
 
-.content {
-  padding: 30px 40px; /* jangan 0 */
+  .content {
+    padding: 30px 40px; /* jangan 0 */
+    }
+
+  .container{
+    padding:0px 40px;
+    max-width:1500px;
+    margin:auto;
+    }
+
+  .filter-info {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    }
+
+  .filter-container{
+    display:flex;
+    gap:15px;
+    flex-wrap:nowrap;
+    align-items: center;
+    }
+
+  .filter-container input,
+  .filter-container select,
+  .filter-container button {
+    height: 40px;
   }
 
-.container{
-  padding:0px 40px;
-  max-width:1500px;
-  margin:auto;
+  .date-range{
+    min-width:260px;
+    height:40px;
+    padding:0 10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    }
+
+  .apply-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
 
-.filter-info {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 10px;
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
+  .btn-add{
+    margin:10px 0;
+    background:#16a34a;color:white;
+    padding:8px;
+    border-radius:6px;
+    }
+
+  .card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.05);
+    margin-bottom: 40px; /* biar gak numpuk */
+    }
+
+  .chart-subtitle {
+    color: #888;
+    font-size: 12px;
   }
 
-.filter-container{
-  display:flex;
-  gap:15px;
-  flex-wrap:nowrap;
-  align-items: center;
+  .chart-wrapper {
+    width: 100%;
+    height: 300px; /* sebelumnya 350 */
   }
 
-.filter-container input,
-.filter-container select,
-.filter-container button {
-  height: 40px;
-}
-
-.date-range{
-  fkex: 2;
-  height:40px;
-  padding:0 10px;
-  border-radius:8px;
-  border:1px solid #ddd;
+  .chart-info {
+    font-size: 12px;
+    color: #888;
   }
 
-.apply-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
+  .chart-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+    }
 
-.btn-add{
-  margin:10px 0;
-  background:#16a34a;color:white;
-  padding:8px;
-  border-radius:6px;
+  .dropdown-mill{
+    height:36px;
+    padding:0 10px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    }
+
+  .badge.in {
+    background: #dcfce7;
+    color: #16a34a;
   }
 
-.card{
-  background:white;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
-  margin-bottom: 40px; /* biar gak numpuk */
+  .badge.out {
+    background: #fee2e2;
+    color: #dc2626;
   }
 
-.chart-subtitle {
-  color: #888;
-  font-size: 12px;
-}
+  .kpi-bar{
+    position: relative;
+    z-index: 2;
+    display:flex;
+    justify-content:center;
+    gap:40px;
+    margin-top:20px;
+    border-top:1px solid #eee;
+    padding-top:10px;
+    }
 
-.chart-wrapper {
-  width: 100%;
-  height: 300px; /* sebelumnya 350 */
-}
+  .kpi-box{
+    text-align:center;
+    }
 
-.chart-info {
-  font-size: 12px;
-  color: #888;
-}
+  .divider{
+    width:1px;
+    height:40px;
+    background:#eee;
+    }
 
-.chart-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   }
 
-.dropdown-mill{
-  height:36px;
-  padding:0 10px;
-  border:1px solid #ddd;
-  border-radius:8px;
+  .table th {
+    background: #f9fafb;
+    text-align: left;
+    padding: 12px;
+    font-size: 13px;
+    color: #555;
   }
 
-.badge.in {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.badge.out {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.kpi-bar{
-  position: relative;
-  z-index: 2;
-  display:flex;
-  justify-content:center;
-  gap:40px;
-  margin-top:20px;
-  border-top:1px solid #eee;
-  padding-top:10px;
+  .table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
   }
 
-.kpi-box{
-  text-align:center;
+  .table tr:hover {
+    background: #f3f6fa;
   }
 
-.divider{
-  width:1px;
-  height:40px;
-  background:#eee;
+  .no-data {
+    color: #999;
+    font-style: italic;
   }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  background: white;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.table th {
-  background: #f9fafb;
-  text-align: left;
-  padding: 12px;
-  font-size: 13px;
-  color: #555;
-}
-
-.table td {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  font-size: 13px;
-}
-
-.table tr:hover {
-  background: #f3f6fa;
-}
-
-.no-data {
-  color: #999;
-  font-style: italic;
-}
-
-/* badge produk */
-.badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.badge.cpo {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.badge.pk {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 50px;
-  color: #999;
-}
-
-.empty-state p {
-  font-size: 16px;
-  margin-bottom: 5px;
-}
-
-/* stock highlight */
-.stock {
-  font-weight: bold;
-  color: #16a34a;
-}
-
-.modal-overlay{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.4);
-  display:flex;justify-content:center;align-items:center;
+  /* badge produk */
+  .badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
   }
 
-.modal{
-  background:white;
-  padding:20px;
-  border-radius:10px;
-  width:600px;
+  .badge.cpo {
+    background: #dcfce7;
+    color: #16a34a;
   }
 
-.input-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
+  .badge.pk {
+    background: #fef3c7;
+    color: #d97706;
   }
 
-.modal-action{
-  margin-top:10px;
-  text-align:right;
+  .empty-state {
+    text-align: center;
+    padding: 50px;
+    color: #999;
   }
+
+  .empty-state p {
+    font-size: 16px;
+    margin-bottom: 5px;
+  }
+
+  /* stock highlight */
+  .stock {
+    font-weight: bold;
+    color: #16a34a;
+  }
+
+  .modal-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.4);
+    display:flex;justify-content:center;align-items:center;
+    }
+
+  .modal{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    width:600px;
+    }
+
+  .input-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    }
+
+  .modal-action{
+    margin-top:10px;
+    text-align:right;
+    }
 
   .plus {
-  color: #16a34a;
-  font-weight: 600;
-}
+    color: #16a34a;
+    font-weight: 600;
+  }
 
-.minus {
-  color: #dc2626;
-  font-weight: 600;
-}
+  .minus {
+    color: #dc2626;
+    font-weight: 600;
+  }
 
 </style>
