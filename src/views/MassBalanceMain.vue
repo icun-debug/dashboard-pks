@@ -6,46 +6,46 @@
     <!-- FILTER -->
     <div class="filter-card">
 
-  <div class="filter-container">
+      <div class="filter-container">
 
-    <!-- DATE -->
-    <input 
-      type="text"  
-      class="input"
-      placeholder="Pilih Tanggal"
-      ref="dateRange"
-    />
+      <!-- DATE -->
+        <input 
+          type="text"  
+          class="input"
+          placeholder="Pilih Tanggal"
+          ref="dateRange"
+          />
 
     <!-- COMPANY -->
-<select 
-  v-model="filter.company_code" 
-  class="input"
-  @change="updateMill"
->
-  <option value="">All Company</option>
-  <option v-for="c in companies" :key="c.company_code" :value="c.company_code">
-    {{ c.company_name }}
-  </option>
-</select>
+        <select 
+          v-model="filter.company_code" 
+          class="input"
+          @change="updateMill"
+        >
+          <option value="">All Company</option>
+          <option v-for="c in companies" :key="c.company_code" :value="c.company_code">
+            {{ c.company_name }}
+          </option>
+        </select>
 
-<!-- MILL -->
-<select 
-  v-model="filter.mill_code" 
-  class="input"
-  :disabled="!filter.company_code"
->
-  <option value="">All Mill</option>
-  <option v-for="m in mills" :key="m.mill_code" :value="m.mill_code">
-    {{ m.mill_name }}
-  </option>
-</select>
+        <!-- MILL -->
+        <select 
+          v-model="filter.mill_code" 
+          class="input"
+          :disabled="!filter.company_code"
+        >
+          <option value="">All Mill</option>
+          <option v-for="m in mills" :key="m.mill_code" :value="m.mill_code">
+            {{ m.mill_name }}
+          </option>
+        </select>
 
-    <!-- BUTTON -->
-    <button class="apply-btn" @click="fetchData">
-      🔍 Apply Filter
-    </button>
+        <!-- BUTTON -->
+        <button class="apply-btn" @click="fetchData">
+          🔍 Apply Filter
+        </button>
 
-  </div>
+        </div>
 
 </div>
     <!-- KPI -->

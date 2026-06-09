@@ -58,18 +58,26 @@
 
   <div class="summary-card">
     <div>
-      <div class="summary-label">Total Tonase</div>
-      <div class="summary-value">{{ totalTonase }} Ton</div>
+      <div class="summary-label">Total Supply</div>
+      <div class="summary-value">{{ totalTonase.toFixed(2) }} Ton</div>
     </div>
     <div class="summary-icon">🚛</div>
   </div>
 
   <div class="summary-card">
     <div>
-      <div class="summary-label">Total JJG</div>
-      <div class="summary-value">{{ totalJJG }}</div>
+      <div class="summary-label">Certified</div>
+      <div class="summary-value">{{ totalCertified.toFixed(2) }}</div>
     </div>
     <div class="summary-icon">📦</div>
+  </div>
+
+  <div class="summary-card">
+    <div>
+      <div class="summary-label">Non Certified</div>
+      <div class="summary-value">{{ totalNonCertified.toFixed(2) }}</div>
+    </div>
+    <div class="summary-icon">🌴</div>
   </div>
 
   <div class="summary-card">
@@ -77,22 +85,23 @@
       <div class="summary-label">Jumlah Estate</div>
       <div class="summary-value">{{ totalEstate }}</div>
     </div>
-    <div class="summary-icon">🌴</div>
   </div>
 </div>
 
      <!-- TABLE -->
-<div class="table-container">
-  <table class="data-table">
+  <div class="table-container">
 
+    <div class=" table-header">
+      <h3>📊 Rekap Supply TBS Per Estate</h3>
+    </div>
+
+    <table class="data-table">
     <thead>
       <tr>
-        <th>Tanggal</th>
         <th>Estate</th>
-        <th>Blok</th>
-        <th>Tonase</th>
-        <th>JJG</th>
-        <th>Transport</th>
+        <th>Certified</th>
+        <th>Non Certified</th>
+        <th>Total Tonase</th>
       </tr>
     </thead>
 
@@ -102,12 +111,10 @@
         v-for="(item, index) in filteredData"
         :key="index"
       >
-        <td>{{ item.tanggal }}</td>
         <td>{{ item.estate }}</td>
-        <td>{{ item.blok }}</td>
-        <td>{{ item.tonase }}</td>
-        <td>{{ item.jjg }}</td>
-        <td>{{ item.transport }}</td>
+        <td>{{ item.certified }}</td>
+        <td>{{ item.non_certified }}</td>
+        <td>{{ item.total_tonase }}</td>
       </tr>
 
       <tr v-if="filteredData.length === 0">
@@ -124,27 +131,27 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, onMounted } from "vue"
+import axios from 'axios'
 
 // 🔹 Dummy data
-const data = ref([
-  {
-    tanggal: "2026-04-15",
-    estate: "Estate A",
-    blok: "A1",
-    tonase: 12,
-    jjg: 150,
-    transport: "KH 1234 AB"
-  },
-  {
-    tanggal: "2026-04-15",
-    estate: "Estate B",
-    blok: "B2",
-    tonase: 8,
-    jjg: 100,
-    transport: "KH 5678 CD"
+const data = ref([])
+
+const loadData = async () => {
+  try {
+
+    const res = await axios.get(
+      "http://127.0.0.1:8000/supply_estate"
+    )
+
+    data.value = res.data
+
+    console.log("Supply Estate:", data.value)
+
+  } catch (err) {
+    console.error("Supply Estate API Error:", err)
   }
-])
+}
 
 // 🔹 Filter state
 const filters = ref({
@@ -159,23 +166,36 @@ const estates = computed(() => {
 })
 
 // 🔹 Filter logic
+// 🔹 Filter logic
 const filteredData = computed(() => {
   return data.value.filter(item => {
     return (
-      (!filters.value.date || item.tanggal === filters.value.date) &&
-      (!filters.value.estate || item.estate === filters.value.estate) &&
-      (!filters.value.blok || item.blok.toLowerCase().includes(filters.value.blok.toLowerCase()))
+      !filters.value.estate ||
+      item.estate === filters.value.estate
     )
   })
 })
 
 // 🔹 Summary
 const totalTonase = computed(() => {
-  return filteredData.value.reduce((sum, d) => sum + d.tonase, 0)
+  return filteredData.value.reduce(
+    (sum, d) => sum + d.total_tonase,
+    0
+  )
 })
 
-const totalJJG = computed(() => {
-  return filteredData.value.reduce((sum, d) => sum + d.jjg, 0)
+const totalCertified = computed(() => {
+  return filteredData.value.reduce(
+    (sum, d) => sum + d.certified,
+    0
+  )
+})
+
+const totalNonCertified = computed(() => {
+  return filteredData.value.reduce(
+    (sum, d) => sum + d.non_certified,
+    0
+  )
 })
 
 const totalEstate = computed(() => {
@@ -190,6 +210,10 @@ const resetFilter = () => {
     blok: ""
   }
 }
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped>
@@ -276,6 +300,19 @@ const resetFilter = () => {
   margin-top: 8px;
   font-size: 24px;
   font-weight: 600;
+}
+
+.table-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #b7c3db;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1c1f;
 }
 
 .table-container {
