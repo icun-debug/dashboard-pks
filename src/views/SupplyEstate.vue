@@ -65,6 +65,23 @@
   </div>
 
   <div class="summary-card">
+      <div>
+        <div class="summary-label">Internal Supply</div>
+        <div class="summary-value">{{ totalInternalSupply.toFixed(2) }}</div>
+      </div>
+      <div class="summary-icon">🏢</div>
+    </div>
+
+  <div class="summary-card">
+    <div>
+      <div class="summary-label">Eksternal Supply</div>
+      <div class="summary-value">{{ totalExternalSupply.toFixed(2) }} Ton</div>
+    </div>
+      <div class="sumaary-icon">🤝</div>
+
+  </div>
+
+  <div class="summary-card">
     <div>
       <div class="summary-label">Certified</div>
       <div class="summary-value">{{ totalCertified.toFixed(2) }}</div>
@@ -89,23 +106,23 @@
 </div>
 
      <!-- TABLE -->
-  <div class="table-container">
+    <div class="table-container">
 
-    <div class=" table-header">
-      <h3>📊 Rekap Supply TBS Per Estate</h3>
-    </div>
+      <div class=" table-header">
+        <h3>📊 Rekap Supply TBS Per Estate</h3>
+      </div>
 
-    <table class="data-table">
-    <thead>
-      <tr>
-        <th>Estate</th>
-        <th>Certified</th>
-        <th>Non Certified</th>
-        <th>Total Tonase</th>
-      </tr>
-    </thead>
+      <table class="data-table">
+      <thead>
+        <tr>
+          <th>Estate</th>
+          <th>Certified</th>
+          <th>Non Certified</th>
+          <th>Total Tonase</th>
+        </tr>
+      </thead>
 
-    <tbody>
+      <tbody>
 
       <tr
         v-for="(item, index) in filteredData"
@@ -118,7 +135,7 @@
       </tr>
 
       <tr v-if="filteredData.length === 0">
-        <td colspan="6" class="empty-data">
+        <td colspan="4" class="empty-data">
           Tidak ada data
         </td>
       </tr>
@@ -126,6 +143,40 @@
     </tbody>
 
   </table>
+
+    <div class="table-container mt-4">
+
+  <div class="table-header">
+    <h3>🚛 Rekap Supply Berdasarkan Supplier</h3>
+  </div>
+
+  <table class="data-table supplier-table">
+
+    <thead>
+      <tr>
+        <th style="width: 60%;">Supplier</th>
+        <th style="width: 20%;">Type</th>
+        <th style="width: 20%;">Total Tonase</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr
+        v-for="(item,index) in supplierData"
+        :key="index"
+      >
+        <td>{{ item.supplier_name }}</td>
+        <td>{{ item.supplier_type }}</td>
+        <td>{{ item.total_tonase }}</td>
+      </tr>
+
+    </tbody>
+
+  </table>
+
+</div>
+
 </div>
 </div>
 </template>
@@ -136,6 +187,21 @@ import axios from 'axios'
 
 // 🔹 Dummy data
 const data = ref([])
+const supplierData = ref([])
+
+const loadSupplierData = async () => {
+  try {
+
+    const res = await axios.get(
+      "http://127.0.0.1:8000/supply_estate_supplier"
+    )
+
+    supplierData.value = res.data
+
+  } catch (err) {
+    console.error(err)
+  }
+}
 
 const loadData = async () => {
   try {
@@ -198,6 +264,20 @@ const totalNonCertified = computed(() => {
   )
 })
 
+const totalInternalSupply = computed(() => {
+  return filteredData.value.reduce(
+    (sum, d) => sum + d.internal_supply,
+    0
+  )
+})
+
+const totalExternalSupply = computed(() => {
+  return filteredData.value.reduce(
+    (sum, d) => sum + d.external_supply,
+    0
+  )
+})
+
 const totalEstate = computed(() => {
   return new Set(filteredData.value.map(d => d.estate)).size
 })
@@ -213,6 +293,7 @@ const resetFilter = () => {
 
 onMounted(() => {
   loadData()
+  loadSupplierData()
 })
 </script>
 
@@ -325,6 +406,7 @@ onMounted(() => {
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .data-table thead {
@@ -350,5 +432,24 @@ onMounted(() => {
   text-align: center;
   color: #94a3b8;
   padding: 20px;
+}
+
+.supplier-table {
+  table-layout: fixed;
+}
+
+.supplier-table th:nth-child(1),
+.supplier-table td:nth-child(1) {
+  width: 50%;
+}
+
+.supplier-table th:nth-child(2),
+.supplier-table td:nth-child(2) {
+  width: 20%;
+}
+
+.supplier-table th:nth-child(3),
+.supplier-table td:nth-child(3) {
+  width: 30%;
 }
 </style>
