@@ -305,12 +305,12 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-.filter-container{
-  display:flex;
-  gap:15px;
-  flex-wrap:nowrap;
+.filter-container {
+  display: flex;
+  gap: 15px;
+  flex-wrap: nowrap;
   align-items: center;
-  }
+}
 
 .input {
   padding: 10px;
@@ -325,131 +325,113 @@ onMounted(() => {
   gap: 6px;
 }
 
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-}
-
-.filter-item label {
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: #666;
-}
-
-.filter-item input,
-.filter-item select {
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.button-area {
-  display: flex;
-  align-items: end;
-}
-
-.button-area button {
-  height: 40px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
 .summary-container {
   display: flex;
   gap: 15px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .summary-card {
   flex: 1;
+  min-width: 180px;
   background: #ffffff;
   padding: 16px;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
 }
 
-.summary-title {
+.summary-label {
   color: #64748b;
   font-size: 13px;
 }
 
-.summary-card h2 {
+.summary-value {
   margin-top: 8px;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.table-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #b7c3db;
-}
-
-.table-header h3 {
-  margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1a1c1f;
 }
+
+/* ================= TABLE ================= */
 
 .table-container {
   background: white;
   border-radius: 12px;
-  overflow-x: auto;
+  overflow: hidden;
   border: 1px solid #e5e7eb;
+  margin-top: 12px;
+}
+
+.table-header {
+  padding: 14px 18px;
+  background: #b7c3db;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1c1f;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .data-table thead {
   background: #f8fafc;
 }
 
-.data-table th {
-  text-align: left;
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
+.data-table th,
 .data-table td {
-  padding: 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
 }
 
+/* hover biar enak dilihat */
 .data-table tbody tr:hover {
   background: #f8fafc;
 }
 
+/* empty state */
 .empty-data {
   text-align: center;
   color: #94a3b8;
   padding: 20px;
 }
 
+/* ================= SUPPLIER TABLE ================= */
+
 .supplier-table {
-  table-layout: fixed;
+  width: 100%;
 }
 
-.supplier-table th:nth-child(1),
-.supplier-table td:nth-child(1) {
-  width: 50%;
+/* biar ga ada gap aneh & fleksibel */
+.supplier-table th,
+.supplier-table td {
+  white-space: nowrap;
 }
 
-.supplier-table th:nth-child(2),
-.supplier-table td:nth-child(2) {
-  width: 20%;
+.supplier-table td:first-child {
+  white-space: normal;
 }
 
-.supplier-table th:nth-child(3),
+/* alignment angka */
 .supplier-table td:nth-child(3) {
-  width: 30%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================= ICON FIX ================= */
+
+.summary-icon {
+  font-size: 22px;
+}
+
+.summary-icon {
+  font-size: 22px;
 }
 </style>
