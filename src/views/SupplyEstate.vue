@@ -137,7 +137,7 @@
         <tbody>
 
           <tr
-            v-for="(item, index) in filteredData"
+            v-for="(item, index) in paginatedData"
             :key="index"
           >
             <td>{{ item.estate }}</td>
@@ -155,6 +155,63 @@
         </tbody>
 
       </table>
+
+      <div class="table-footer">
+
+  <div class="entries-info">
+    Showing
+    {{ (currentPage - 1) * perPage + 1 }}
+    to
+    {{
+      Math.min(
+        currentPage * perPage,
+        filteredData.length
+      )
+    }}
+    of
+    {{ filteredData.length }}
+    entries
+  </div>
+
+  <div class="pagination">
+
+    <button
+      class="page-btn"
+      @click="currentPage = 1"
+      :disabled="currentPage === 1"
+    >
+      «
+    </button>
+
+    <button
+      class="page-btn"
+      @click="currentPage--"
+      :disabled="currentPage === 1"
+    >
+      ‹
+    </button>
+
+    <button
+      class="page-btn"
+      @click="currentPage++"
+      :disabled="currentPage === totalPages"
+    >
+      ›
+    </button>
+
+    <button
+      class="page-btn"
+      @click="currentPage = totalPages"
+      :disabled="currentPage === totalPages"
+    >
+      »
+    </button>
+
+  </div>
+
+  </div>
+
+</div>
 
     </div>
 
@@ -180,7 +237,7 @@
         <tbody>
 
           <tr
-            v-for="(item, index) in supplierData"
+            v-for="(item, index) in paginatedSupplierData"
             :key="index"
           >
             <td>{{ item.supplier_name }}</td>
@@ -202,9 +259,64 @@
 
       </table>
 
+      <div class="table-footer">
+
+  <div class="entries-info">
+    Showing
+    {{ (currentPageSupplier - 1) * perPageSupplier + 1 }}
+    to
+    {{
+      Math.min(
+        currentPageSupplier * perPageSupplier,
+        supplierData.length
+      )
+    }}
+    of
+    {{ supplierData.length }}
+    entries
+  </div>
+
+  <div class="pagination">
+
+    <button
+      class="page-btn"
+      @click="currentPageSupplier = 1"
+      :disabled="currentPageSupplier === 1"
+    >
+      «
+    </button>
+
+    <button
+      class="page-btn"
+      @click="currentPageSupplier--"
+      :disabled="currentPageSupplier === 1"
+    >
+      ‹
+    </button>
+
+    <button
+      class="page-btn"
+      @click="currentPageSupplier++"
+      :disabled="currentPageSupplier === totalPagesSupplier"
+    >
+      ›
+    </button>
+
+    <button
+      class="page-btn"
+      @click="currentPageSupplier = totalPagesSupplier"
+      :disabled="currentPageSupplier === totalPagesSupplier"
+    >
+      »
+    </button>
+
+  </div>
+
     </div>
 
   </div>
+
+
 </template>
 
 <script setup>
@@ -266,6 +378,55 @@ const filteredData = computed(() => {
       item.estate === filters.value.estate
     )
   })
+})
+
+// ======================
+// PAGINATION ESTATE
+// ======================
+const currentPage = ref(1)
+const perPage = 10
+
+const totalPages = computed(() => {
+  return Math.ceil(
+    filteredData.value.length / perPage
+  )
+})
+
+const paginatedData = computed(() => {
+
+  const start =
+    (currentPage.value - 1) * perPage
+
+  return filteredData.value.slice(
+    start,
+    start + perPage
+  )
+
+})
+
+// ======================
+// PAGINATION SUPPLIER
+// ======================
+const currentPageSupplier = ref(1)
+const perPageSupplier = 10
+
+const totalPagesSupplier = computed(() => {
+  return Math.ceil(
+    supplierData.value.length / perPageSupplier
+  )
+})
+
+const paginatedSupplierData = computed(() => {
+
+  const start =
+    (currentPageSupplier.value - 1)
+    * perPageSupplier
+
+  return supplierData.value.slice(
+    start,
+    start + perPageSupplier
+  )
+
 })
 
 // 🔹 Summary
@@ -344,18 +505,41 @@ const statusClass = (status) => {
     : "badge-non-certified"
 }
 
-onMounted(() => {
-  loadData()
-  loadSupplierData()
-})
 
 onMounted(() => {
   loadData()
   loadSupplierData()
 })
+
+
 </script>
 
 <style scoped>
+.table-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:20px;
+}
+
+.pagination{
+    display:flex;
+    gap:8px;
+}
+
+.page-btn{
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.page-btn:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+}
+
 .filter-card {
   background: #f8fafc;
   padding: 16px;
